@@ -1,0 +1,46 @@
+<template>
+  <div class="image-list">
+    <el-row :gutter="20" v-if="images.length">
+      <el-col :span="6" v-for="(image, index) in images" :key="index">
+
+        <el-image
+            style="width: 100%;"
+            :src="image"
+            :preview-src-list="previewSrcList"
+        >
+          <template #placeholder>
+            <el-skeleton
+                style="width: 100%; height: 200px;"
+                animated
+            />
+          </template>
+        </el-image>
+      </el-col>
+    </el-row>
+<!--    <div v-else class="text-center">NO SE SUBIERON IMAGENES</div>-->
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'ImageList',
+  props: {
+    images: {
+      type: Array,
+      required: true,
+      default: () => [],
+    },
+  },
+  computed: {
+    previewSrcList() {
+      return this.images;
+    },
+  },
+};
+</script>
+
+<style scoped>
+.image-list {
+  padding: 20px;
+}
+</style>

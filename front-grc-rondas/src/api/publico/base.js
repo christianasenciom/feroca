@@ -1,0 +1,26 @@
+import Resource from '@/api/resource';
+import request from "@/utils/request.js";
+
+class BasesResource extends Resource {
+  constructor() {
+    super('publico/bases');
+  }
+
+    getBases(id_sector) {
+    return request({
+      url: '/publico/sectores/' + id_sector + '/bases',
+      method: 'get'
+    })
+  }
+
+  getRonderosByBase(query) {
+    return request({
+      url: '/publico/bases/ronderos',
+      method: 'get',
+      params: query
+    })
+  }
+}
+
+export { BasesResource as default }
+

@@ -1,0 +1,150 @@
+import axios from 'axios'
+import { getToken, removeToken } from './auth'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+const service = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  headers: { 'X-Requested-With': 'XMLHttpRequest' },
+  withCredentials: true,
+  timeout: 1000 * 60
+})
+
+service.interceptors.request.use(
+  (config) => {
+    const token = getToken()
+    if (token) {
+      config.headers['Authorization'] = 'Bearer ' + token
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+service.interceptors.response.use(
+  (response) => {
+    if (response.headers.authorization) {
+      response.data.token = response.headers.authorization
+    }
+    return response.data
+  },
+  (error) => {
+    if (error.response.status === 400) {
+      const { /*state,*/ message } = error.response.data
+      console.log(error.response.data)
+      ElMessage({
+        dangerouslyUseHTMLString: true,
+        message: '<strong>Error de solicitud:</strong> ' + message,
+        type: 'warning',
+        duration: 6.25 * 1000
+      })
+      return Promise.reject(error)
+    }
+
+    if (error.response.status === 401 && getToken()) {
+      ElMessageBox.confirm('Su sesión ha caducado, por favor vuelva a iniciar sesión', 'Atención', {
+        confirmButtonText: 'Ir a iniciar sesión',
+        cancelButtonText: 'Cancelar',
+        type: 'warning'
+      }).then(() => {
+        removeToken()
+        location.reload()
+      })
+    }
+
+    if (error.response.status === 401) {
+      const { /*state,*/ message } = error.response.data
+      console.log(error.response.data)
+      ElMessage({
+        dangerouslyUseHTMLString: true,
+        message: '<span style="font-weight: bold;">Aviso de Autenticación</span><br>' + message,
+        type: 'info',
+        duration: 6.25 * 1000
+      })
+
+      return Promise.reject(error)
+    }
+
+    if (error.response.status === 419) {
+      location.reload()
+    }
+
+    let mimsg = '<ul>'
+
+    if (error.response.status === 422) {
+      if (error.response.data && error.response.data.errors) {
+        Object.entries(error.response.data.errors).forEach(([value]) => {
+          value.forEach((element) => {
+            mimsg += '<li>' + element + '</li>'
+          })
+        })
+      }
+      ElMessage({
+        dangerouslyUseHTMLString: true,
+        message:
+          '<strong>Operación no realizada!</strong> <em> las razones pueden ser:</em><br>' + mimsg,
+        type: 'info',
+        duration: 6.25 * 1000
+      })
+
+      return Promise.reject(error)
+    }
+
+    if (error.response.status === 500) {
+      ElMessage({
+        dangerouslyUseHTMLString: true,
+        message:
+          '<strong>Ups!</strong> <em>algo salió mal...</em><br>Se ha producido un error interno...</em>',
+        type: 'info',
+        duration: 6.25 * 1000
+      })
+
+      return Promise.reject(error)
+    }
+
+    if (error.response.status === 404) {
+      ElMessage({
+        dangerouslyUseHTMLString: true,
+        message:
+          '<strong>Ups!</strong> <em>algo salió mal...</em><br>No se ha llevado a cabo la operación solicitada</em>',
+        type: 'info',
+        duration: 6.25 * 1000
+      })
+
+      return Promise.reject(error)
+    }
+
+    if (error.response.data && error.response.data.errors) {
+      const _message = error.response.data.errors.message
+      if (_message) {
+        _message.forEach((element) => {
+          mimsg += '<li>' + element + '</li>'
+        })
+        mimsg += '</ul>'
+      } else {
+        mimsg = error.response.data.errors
+      }
+    } else if (error.response.data && error.response.data.error) {
+      const _message = error.response.data.error.message
+      if (_message) {
+        mimsg = _message
+      } else {
+        mimsg = error.response.data
+      }
+    } else {
+      mimsg = error.message
+    }
+
+    ElMessage({
+      dangerouslyUseHTMLString: true,
+      message: '<strong>Ups!</strong> <em>algo salió mal...</em><br>' + mimsg,
+      type: 'info',
+      duration: 5 * 1000
+    })
+
+    return Promise.reject(error)
+  }
+)
+
+export default service

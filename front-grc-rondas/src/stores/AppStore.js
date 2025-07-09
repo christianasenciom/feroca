@@ -1,0 +1,32 @@
+import { defineStore } from 'pinia'
+
+import { useDark } from '@vueuse/core'
+
+export const useAppStore = defineStore('AppStore', {
+  state: () => ({
+    isPhone: false,
+    sidebarActive: true,
+    widthSidebar: '260px',
+    isDark: useDark()
+  }),
+  actions: {
+    checkDeviceType() {
+      const userAgent = window.navigator.userAgent.toLowerCase()
+      this.isPhone = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+        userAgent
+      )
+      this.sidebarActive = !this.isPhone
+      console.log(this.isPhone)
+    },
+    toggleSideBar() {
+      this.sidebarActive = !this.sidebarActive
+      if (window.innerWidth > 600) {
+        if (this.sidebarActive) {
+          this.widthSidebar = '0px'
+        } else {
+          this.widthSidebar = '260px'
+        }
+      }
+    }
+  }
+})

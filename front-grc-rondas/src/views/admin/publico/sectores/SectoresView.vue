@@ -1,0 +1,432 @@
+<template>
+  <div>
+    <div class="el-header">
+      <h3>Lista de Sectores</h3>
+      <div class="filter-container" style="float: right">
+        <el-input v-model="listQuery.keyword" placeholder="Buscar" class="input-with-select" clearable
+          style="max-width: 600px" @clear="handleBuscarDatos" @keyup.enter="handleBuscarDatos">
+          <template #append>
+            <el-button type="primary" :icon="Search" @click="handleBuscarDatos">
+              <span style="vertical-align: middle"> Buscar </span>
+            </el-button>
+          </template>
+        </el-input>
+      </div>
+    </div>
+    <el-table border fit :data="tableData" class="py-4" v-loading="listLoading">
+      <el-table-column label="ID" prop="id" align="center" width="70" />
+      <el-table-column label="Sector" prop="descripcion" />
+      <el-table-column label="Distrito" prop="distrito.descripcion" />
+      <el-table-column label="Provincia" prop="distrito.provincia.descripcion" />
+      <el-table-column label="Region" prop="distrito.provincia.region.descripcion" />
+      <el-table-column prop="estado" label="Estado">
+        <template #default="scope">
+          <!--          {{ scope.row.estado ? 'Activo' : 'Inactivo' }}-->
+          <el-tag v-if="scope.row.estado" type="success">Activo</el-tag>
+          <el-tag v-else type="danger">Inactivo</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column align="right" width="120">
+        <template #header>
+          <el-button type="primary" class="ache-background-color-template" :icon="Plus" @click="openFormCreate" v-if="!isActionDisabled('pub.sectores.crear')">
+            Agregar
+          </el-button>
+        </template>
+        <template #default="scope">
+          <el-tooltip
+              class="box-item"
+              effect="dark"
+              content="Editar"
+              placement="top-start"
+          >
+            <el-icon size="20" style="margin-right: 10px; cursor: pointer;" @click="openFormEditar(scope.row.id)" v-if="!isActionDisabled('pub.sectores.actualizar')" color="#E3CB2DFF"><Edit /></el-icon>
+          </el-tooltip>
+          <slot v-if="!isActionDisabled('pub.sectores.eliminar')">
+            <el-tooltip
+                class="box-item"
+                effect="dark"
+                content="Desactivar"
+                placement="top-start"
+                v-if="scope.row.estado"
+            >
+              <el-icon size="20" style="margin-right: 10px; cursor: pointer;" @click="accionDesactivarRegistro(scope.row.id, scope.row.descripcion)" color="red"><Close /></el-icon>
+            </el-tooltip>
+            <el-tooltip
+                class="box-item"
+                effect="dark"
+                content="Activar"
+                placement="top-start"
+                v-else
+            >
+              <el-icon  size="20" style="margin-right: 10px; cursor: pointer;" @click="accionActivarRegistro(scope.row.id, scope.row.descripcion)" color="green"><Check /></el-icon>
+            </el-tooltip>
+          </slot>
+        </template>
+      </el-table-column>
+    </el-table>
+    <div class="paging">
+      <el-pagination v-if="meta.total > listQuery.limit" background v-model:currentPage="meta.current_page"
+        layout="total, prev, next, pager" :total="meta.total" @current-change="handleCurrentChange"
+        :page-size="meta.per_page" />
+    </div>
+
+    <!-- Dialogo para editar o crear estado TUC -->
+    <el-dialog v-model="visibleDialogForm" :close-on-click-modal="false" top="7vh" width="500" :title="titleDialogForm">
+      <div>
+        <el-form ref="formCreateEditSector" v-loading="loadingSaveDialogForm" :model="modelSector"
+          :rules="reglasValidacion" status-icon label-width="120px" label-position="top" v-on:submit.prevent>
+          <el-form-item label="Sector" prop="descripcion">
+            <el-input ref="descripcionField" v-model="modelSector.descripcion" type="text" autocomplete="off"
+              placeholder="Sector" />
+          </el-form-item>
+          <el-form-item label="Distrito" prop="distrito_id">
+            <el-select ref="distrito_idField" v-model="modelSector.distrito_id" placeholder="Distrito" style="width: 100%" searchable>
+              <el-option
+                  v-for="item in optionsDistritos"
+                  :key="item.id"
+                  :label="item.descripcion"
+                  :value="item.id"
+              >
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="saveFormCreateEdit('formCreateSector')">
+            Guardar
+          </el-button>
+          <el-button type="danger" @click="resetFormCreateEdit('formCreateSector')">Resetear</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+  </div>
+</template>
+<style scoped>
+.paging {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  align-content: flex-start;
+  padding-top: 20px;
+}
+</style>
+<script>
+import {ref, reactive, onMounted, nextTick, markRaw} from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import {Search, Plus, Edit, Delete, Check, Close} from '@element-plus/icons-vue';
+
+import { useAuthStore } from "@/stores/AuthStore";
+import SectorResource from '@/api/publico/sector';
+import {isActionDisabled} from "@/utils/utils.js";
+import DistritoResource from "@/api/publico/distrito";
+
+
+export default {
+  name: 'DistritosView',
+  components: {Edit, Close, Check},
+  methods: {isActionDisabled},
+  setup() {
+    const distritoResource = new DistritoResource();
+    const sectorResource = new SectorResource();
+    const authStore = useAuthStore()
+
+    const formCreateEditSector = ref(null);
+    const descripcionField = ref(null);
+
+    const modelSector = reactive({
+      id: undefined,
+      descripcion: '',
+      distrito_id: '',
+    });
+    const reglasValidacion = {
+      descripcion: [
+        { required: true, message: 'El campo es requerido', trigger: 'blur' }
+      ],
+      distrito_id: [
+        { required: true, message: 'El campo es requerido', trigger: 'blur' }
+      ],
+    };
+
+
+    const tableData = ref([]);
+    const meta = ref({});
+    const listLoading = ref(true);
+
+    const listQuery = reactive({
+      page: 1,
+      limit: 8,
+      keyword: ''
+    });
+
+    const visibleDialogForm = ref(false);
+    const titleDialogForm = ref('');
+    const loadingSaveDialogForm = ref(false);
+    const optionsDistritos = ref([]);
+
+    const openFormCreate = () => {
+      resetModelSector();
+      titleDialogForm.value = 'Registrar Sector';
+      visibleDialogForm.value = true;
+      nextTick(() => {
+        fetchDistritos(); //cargar provinciaes
+        formCreateEditSector.value?.clearValidate();
+        descripcionField.value?.focus();
+      });
+    };
+
+    const openFormEditar = async (id) => {
+      await fetchDistritos(); //cargar provinciaes
+      titleDialogForm.value = 'Editar Sector';
+      visibleDialogForm.value = true;
+      loadingSaveDialogForm.value = true;
+      try {
+        const { data } = await sectorResource.get(id);
+        Object.assign(modelSector, {
+          id: data.id,
+          descripcion: data.descripcion,
+          distrito_id: data.distrito.id,
+        });
+        nextTick(() => {
+          formCreateEditSector.value?.clearValidate();
+          descripcionField.value?.focus();
+        });
+      } catch (error) {
+        visibleDialogForm.value = false;
+        ElMessage.info('Error al obtener datos');
+      } finally {
+        loadingSaveDialogForm.value = false;
+      }
+    };
+
+    const resetModelSector = () => {
+      Object.assign(modelSector, {
+        id: undefined,
+        descripcion: '',
+        distrito_id: '',
+      });
+    };
+
+    const saveFormCreateEdit = () => {
+      formCreateEditSector.value?.validate((valid) => {
+        if (valid) {
+          if (modelSector.id === undefined) {
+            saveDataForm();
+          } else {
+            saveEditDataForm();
+          }
+        } else {
+          console.log('Formulario no válido');
+        }
+      });
+    };
+
+
+    const saveDataForm = () => {
+      loadingSaveDialogForm.value = true;
+      sectorResource.store(modelSector)
+        .then(() => {
+          ElMessage.success('Datos guardados correctamente');
+          resetModelSector();
+          visibleDialogForm.value = false;
+          fetchSectors();
+        })
+        .catch((error) => {
+          console.error('Error saving data:', error);
+          ElMessage.error('Se ha producido un error al guardar');
+        })
+        .finally(() => {
+          loadingSaveDialogForm.value = false;
+        });
+    };
+
+    const saveEditDataForm = () => {
+      loadingSaveDialogForm.value = true;
+      sectorResource.update(modelSector.id, modelSector)
+        .then(() => {
+          ElMessage.success('Datos actualizados correctamente');
+          resetModelSector();
+          visibleDialogForm.value = false;
+          fetchSectors();
+        })
+        .catch((error) => {
+          console.error('Error updating data:', error);
+          ElMessage.error('Se ha producido un error al actualizar');
+        })
+        .finally(() => {
+          loadingSaveDialogForm.value = false;
+        });
+    };
+
+    const accionEliminarRegistro = (id, nombre) => {
+      ElMessageBox.confirm(
+        `Seguro que desea eliminar el registro <em>${nombre}</em>?`,
+        'Atención',
+        {
+          confirmButtonText: 'Si, eliminar',
+          cancelButtonText: 'Cancelar',
+          type: 'warning',
+          dangerouslyUseHTMLString: true
+        }
+      )
+        .then(() => {
+          sectorResource.destroy(id)
+            .then(() => {
+              ElMessage.success('Registro eliminado');
+              fetchSectors();
+            })
+            .catch((error) => {
+              console.error('Error deleting data:', error);
+              ElMessage.error('Se ha producido un error al eliminar');
+            });
+        })
+        .catch(() => {
+          ElMessage.info('Operación cancelada');
+        });
+    };
+
+    const accionDesactivarRegistro = (id, nombre) => {
+
+      ElMessageBox.confirm(
+        `Seguro que desea Desactivar el registro <em>${nombre}</em>?`,
+        'Atención',
+        {
+          top: '5vh',
+          icon: markRaw(Delete),
+          confirmButtonText: 'Si, desactivar',
+          cancelButtonText: 'Cancelar',
+          type: 'warning',
+          dangerouslyUseHTMLString: true
+        }
+      )
+        .then(() => {
+          sectorResource.inactivar(id)
+            .then(() => {
+              ElMessage.success('Registro desactivado');
+              fetchSectors();
+            })
+            .catch((error) => {
+              console.error('Error desactivating data:', error);
+              ElMessage.error('Se ha producido un error al desactivar');
+            });
+        })
+        .catch(() => {
+          ElMessage.info('Operación cancelada');
+        });
+    };
+
+    const accionActivarRegistro = (id, nombre) => {
+
+      ElMessageBox.confirm(
+        `Seguro que desea Activar el registro <em>${nombre}</em>?`,
+        'Atención',
+        {
+          top: '5vh',
+          icon: markRaw(Check),
+          confirmButtonText: 'Si, activar',
+          cancelButtonText: 'Cancelar',
+          type: 'warning',
+          dangerouslyUseHTMLString: true
+        }
+      )
+        .then(() => {
+          sectorResource.activar(id)
+            .then(() => {
+              ElMessage.success('Registro activado');
+              fetchSectors();
+            })
+            .catch((error) => {
+              console.error('Error activating data:', error);
+              ElMessage.error('Se ha producido un error al activar');
+            });
+        })
+        .catch(() => {
+          ElMessage.info('Operación cancelada');
+        });
+    };
+
+    const resetFormCreateEdit = () => {
+      formCreateEditSector.value?.resetFields();
+      nextTick(() => {
+        descripcionField.value?.focus();
+      });
+    };
+
+
+    const handleBuscarDatos = () => {
+      listQuery.page = 1;
+      fetchSectors();
+    };
+
+    const handleCurrentChange = (val) => {
+      listQuery.page = val;
+      fetchSectors();
+    };
+
+    const fetchSectors = () => {
+      listLoading.value = true;
+      sectorResource.list(listQuery)
+        .then(response => {
+          tableData.value = response.data;
+          meta.value = response.meta;
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+          ElMessage.error('Error al obtener datos');
+        })
+        .finally(() => {
+          listLoading.value = false;
+        });
+    };
+
+    const fetchDistritos = async () => {
+      await distritoResource.list(listQuery)
+        .then(response => {
+          const { data } = response
+          optionsDistritos.value = data;
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+          ElMessage.error('Error al obtener datos');
+        });
+    };
+
+    onMounted(fetchSectors);
+
+    return {
+      authStore,
+      modelSector,
+      reglasValidacion, // reglas de validacion
+      tableData,
+      meta,
+      listLoading,
+      listQuery,
+      visibleDialogForm,
+      titleDialogForm,
+      loadingSaveDialogForm,
+      formCreateEditSector,
+      descripcionField,
+      openFormCreate,
+      openFormEditar,
+      saveFormCreateEdit,
+      accionEliminarRegistro,
+      resetFormCreateEdit,
+      handleBuscarDatos,
+      handleCurrentChange,
+      accionActivarRegistro,
+      accionDesactivarRegistro,
+      optionsDistritos,
+
+      Search,
+      Plus,
+      Edit,
+      Delete,
+
+    };
+  }
+};
+</script>

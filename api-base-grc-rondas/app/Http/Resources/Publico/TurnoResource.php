@@ -1,0 +1,38 @@
+<?php
+
+namespace App\Http\Resources\Publico;
+
+use App\Http\Resources\Admin\Auth\RonderoResource;
+use App\Models\Publico\ArchivosAsamblea;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class TurnoResource extends JsonResource
+{
+    /**
+     * Transform the resource into an array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+
+        return [
+            'id' => $this->id,
+            'descripcion' => $this->descripcion,
+            'fecha' => $this->fecha,
+            'region' => new RegionResource($this->region),
+            'provincia' => new ProvinciaResource($this->provincia),
+            'distrito' => new DistritoResource($this->distrito),
+            'sector' => new SectorResource($this->sector_zona),
+            'base' => new BaseResource($this->base),
+            'foto' =>  $this->foto,
+            'tipo_reunion' =>  $this->tipo_reunion,
+            'responsable_turno' =>  $this->responsable_turno,
+            'responsable' =>  $this->tipo_reunion === 'Vigilancia' ? $this->responsable->persona : '',
+            'estado' =>  $this->estado,
+            'detalle_ronderos' =>  ProgramacionTurnoResource::collection($this->listaRonderos),
+            'archivos_asamblea' =>  ArchivosAsambleaResource::collection($this->archivos_asamblea),
+        ];
+    }
+}

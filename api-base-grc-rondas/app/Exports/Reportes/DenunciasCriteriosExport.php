@@ -1,0 +1,88 @@
+<?php
+
+namespace App\Exports\Reportes;
+
+use App\Http\Resources\Publico\DetalleDenunciaResource;
+use App\Models\Publico\Denuncia;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Concerns\FromView;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+
+class DenunciasCriteriosExport implements FromView, ShouldAutoSize
+{
+
+    private $fechaInicio;
+    private $fechaFin;
+    private $tipo;
+    private $tipoId;
+
+    public function __construct($fechaInicio, $fechaFin, $tipo, $tipoId)
+    {
+        $this->fechaInicio = $fechaInicio;
+        $this->fechaFin = $fechaFin;
+        $this->tipo = $tipo;
+        $this->tipoId = $tipoId;
+    }
+
+
+    public function view(): View
+    {
+        $resultados = array();
+
+        if ($this->fechaInicio == null || $this->fechaFin == null || $this->tipo == null || $this->tipoId == null) {
+            return response()->json([
+                'message' => 'Debe enviar los parametros'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $tipo = $this->tipo;
+        $t_id = $this->tipoId;
+        $denuncias = Denuncia::whereBetween('fecha', [$this->fechaInicio, $this->fechaFin])
+            ->where(function ($query) use ($tipo, $t_id) {
+                switch ($tipo) {
+                    case 'base':
+                        $query->where('base_id', $t_id);
+                        break;
+                    case 'zona':
+                        $query->where('sector_zona_id', $t_id);
+                        break;
+                    case 'distrito':
+                        $query->where('distrito_id', $t_id);
+                        break;
+                    case 'provincia':
+                        $query->where('provincia_id', $t_id);
+                        break;
+                    case 'region':
+                        $query->where('region_id', $t_id);
+                        break;
+                    default:
+                        break;
+                }
+            })
+            ->get();
+
+
+        foreach ($denuncias as $item) {
+            array_push(
+                $resultados,
+                [
+                    'fecha' => date('d/m/Y', strtotime($item->fecha)),
+                    'tipo_conflicto' => $item->conflicto->descripcion,
+                    'num_denuncia' => $item->num_denuncia,
+                    'denunciante' => $item->denunciante->nombres . ' ' . $item->denunciante->apellido_paterno . ' ' . $item->denunciante->apellido_materno,
+                    'listaDenunciados' =>  DetalleDenunciaResource::collection($item->listaDenunciados),
+                    'estado_denuncia' => $item->estado_denuncia,
+                    'descripcion' => $item->descripcion,
+                ]
+            );
+        }
+
+        $resultados  = json_decode(json_encode($resultados));
+        $fechaInicio = $this->fechaInicio;
+        $fechaFin = $this->fechaFin;
+        return view('excel.denuncias_por_criterios', compact('resultados','fechaInicio','fechaFin', 'tipo'));
+    }
+}

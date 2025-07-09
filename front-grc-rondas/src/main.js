@@ -1,0 +1,35 @@
+import 'element-plus/dist/index.css'
+import 'element-plus/theme-chalk/display.css'
+// import 'element-plus/theme-chalk/dark/css-vars.css'
+import './assets/css/main.css'
+import './assets/css/variables.css'
+
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+
+import ElementPlus from 'element-plus'
+import es from 'element-plus/es/locale/lang/es'
+import { createGlobalState, useDark } from '@vueuse/core'
+
+import App from './App.vue'
+import router from './router'
+
+import canAccess from './directives/permission'
+import SvgIcon from '@/components/Icons/SvgIcon.vue'
+
+const useDarkState = createGlobalState(() => useDark())
+
+const app = createApp(App)
+// icons
+app.component('v-icon', SvgIcon)
+// directives
+app.directive('can', canAccess)
+// store
+app.use(createPinia())
+// Router
+app.use(router)
+// ElementPlus libreria de componentes
+app.use(ElementPlus, { locale: es })
+// modo oscuro config
+app.provide('useDarkState', useDarkState)
+app.mount('#app')

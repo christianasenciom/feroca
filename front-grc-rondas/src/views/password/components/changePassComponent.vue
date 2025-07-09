@@ -1,0 +1,133 @@
+<template>
+    <div v-loading="loading">
+        <el-form
+        ref="form_change"
+        :model="form"
+        :rules="rules"
+        status-icon
+        label-width="180px"
+      >
+        <el-form-item label="Contraseña" prop="pass">
+          <el-input v-model="form.password" type="password" autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="Confirmar contraseña" prop="checkPass">
+          <el-input
+            v-model="form.password_confirmation"
+            type="password"
+            autocomplete="off"
+          />
+        </el-form-item>
+      </el-form>
+      <el-row type="flex" justify="center">
+        <el-col :span="props.desde === 'ex' ? 12 : 24" align="end">
+            <el-button v-loading.fullscreen.lock="loading"
+                         type="primary" @click="submitForm(form_change)">
+                <template #icon>
+                    <v-icon name="hi-refresh" />
+                </template>
+                Cambiar 
+            </el-button>
+        </el-col>
+        <el-col v-if="props.desde === 'ex'" :span="12" align="end">
+            <el-button type="danger" @click="close">
+                <template #icon>
+                    <v-icon name="hi-solid-x-circle" />
+                </template>
+                Salir
+            </el-button>
+        </el-col>
+      </el-row>
+    </div>
+</template>
+<script setup>
+import { reactive, ref, defineProps } from 'vue'
+import { useAuthStore } from '@/stores/AuthStore'
+import UserResource from '@/api/auth/usuario'
+import { useRouter } from 'vue-router'
+import { ElNotification } from 'element-plus'
+
+const props = defineProps({
+    desde: {
+    type: String,
+    default: "in"
+  }
+});
+
+// variables
+const authStore = useAuthStore()
+const userResource = new UserResource()
+const router = useRouter()
+const form_change = ref()
+const loading = ref(false)
+const form = ref({
+    password: '',
+    password_confirmation: ''
+})
+
+// para validacion
+const validatePass = (rule, value, callback) => {
+    if (value === '') {
+        return callback('Debe ingresar una contraseña')
+    } else {
+        if (value.length < 8) {
+            return callback('Debe ingresar una constraseña minima de 8 digitos')
+        }
+        callback()
+    }
+    callback()
+}
+const validateCheckPass = (rule, value, callback) => {
+    if (value === '') {
+        return callback('Debe ingresar la confirmación contraseña')
+    } else {
+        if (value !== form.value.pass) {
+            return callback('La confirmación no coincide con la contraseña')
+        }
+        callback()
+    }
+    callback()
+}
+
+const rules = reactive({
+    password: [{ validator: validatePass, trigger: 'blur' }],
+    password_confirmation: [{ validator: validateCheckPass, trigger: 'blur' }]
+})
+
+// metodos
+const submitForm = (formEl) => {
+    if (!formEl) return 
+    formEl.validate((valid) => {
+        if (valid) {
+            loading.value = true
+            userResource.changePass(form.value).then((response) => {
+                console.log(response)
+                ElNotification({
+                    title: '¡Éxito!',
+                    message: 'Los datos se actualizaron correctamente',
+                    type: 'success',
+                })
+                if (props.desde === 'ex') close()
+                else limpiarInterno()
+            }).catch(error => {
+                console.log('error', error)
+                loading.value = false
+            })
+        } else {
+            console.log('error submit!')
+            return false
+        }
+    })
+}
+const close = async () => {
+    loading.value = true
+    await authStore.logout('all')
+    await router.push(`/signin`)
+}
+const limpiarInterno = () => {
+    loading.value = false
+    form.value.password = ''
+    form.value.password_confirmation= ''
+}
+</script>
+<style>
+</style>

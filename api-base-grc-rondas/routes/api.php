@@ -1,0 +1,72 @@
+<?php
+
+use App\Http\Controllers\Publico\BaseController;
+use App\Http\Controllers\Publico\PersonaController;
+use App\Http\Controllers\Publico\RonderoController;
+use App\Http\Controllers\QRController;
+use App\Http\Controllers\UtilsController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\RoleController;
+use App\Http\Controllers\Auth\UserController;
+use App\Http\Controllers\Auth\WebAuthController;
+use App\Http\Controllers\Auth\PermissionController;
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "api" middleware group. Make something great!
+|
+*/
+// Rutas de inicio de sesion
+Route::post('auth/signin', [WebAuthController::class, 'SignIn']);
+
+Route::get('/validar-qr/{qr}', [QRController::class, 'validarQr']);
+
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return $request->user();
+});
+
+Route::group(['middleware' => 'auth:sanctum'], function () {
+
+    // Informacion de usuario para aplicacion web
+    Route::get('auth/webuser', [WebAuthController::class, 'UserInfo']);
+    Route::post('auth/weblogout', [WebAuthController::class, 'SingOutCurrentSession']);
+    Route::post('auth/weblogoutall', [WebAuthController::class, 'SingOutAllSessions']);
+    Route::post('auth/newpassword', [WebAuthController::class, 'passwordResset']);
+    Route::post('auth/updateimage', [WebAuthController::class, 'updateImage']);
+    Route::post('auth/initnewpassword', [WebAuthController::class, 'passwordRessetInit']);
+
+    Route::resource('auth/permisos', PermissionController::class);
+    Route::get('auth/permisosall', [PermissionController::class, 'all']);
+    Route::get('permissionsforrole', [PermissionController::class, 'fetchPermissionsForRole']);
+    Route::resource('auth/roles', RoleController::class);
+    Route::get('auth/rolesall', [RoleController::class, 'all']);
+    Route::post('syncRolePermissions', [RoleController::class, 'syncRolePermissions']);
+
+    // Usuarios
+    Route::resource('auth/usuarios', UserController::class);
+    Route::resource('publico/personas', PersonaController::class);
+
+    // Ronderos
+    Route::resource('publico/ronderos', RonderoController::class);
+    Route::post('publico/ronderos/{id}/activar', [RonderoController::class, 'activar']);
+    Route::post('publico/ronderos/{id}/desactivar', [RonderoController::class, 'inactivar']);
+    Route::post('generar-carnet', [RonderoController::class, 'generarCarnet']);
+
+    Route::get('publico/bases/ronderos', [BaseController::class, 'getRonderosByBase']);
+
+    // RUTAS API RENIEC GRC
+    Route::get('getdatadni/{dni}/{tipo_persona}', [UtilsController::class, 'getDataDNI']);
+
+    // Rutas exportar
+    require __DIR__ . '/api_h.php';
+    require __DIR__ . '/apiexports.php';
+    require __DIR__ . '/api_o.php';
+
+
+});

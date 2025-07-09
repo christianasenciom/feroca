@@ -1,0 +1,33 @@
+import AdminLayout from '@/layout/admin/AdminLayout.vue'
+
+const ronderosRoutes = {
+  path: '/administracion',
+  component: AdminLayout,
+  redirect: '/dashboard/index',
+  name: 'Administración',
+  meta: {
+    title: 'Administración',
+    icon: 'md-playlistaddcheck-round',
+    noCache: true,
+    // ,
+    permissions: ['pub.rondero.listar']
+  },
+  children: [
+    {
+      path: 'ronderos',
+      component: () => import('@/views/admin/publico/ronderos/RonderosView.vue'),
+      name: 'Ronderos',
+      meta: { title: 'Ronderos', icon: 'hi-solid-users', noCache: true, permissions: 'pub.rondero.listar' }
+      // meta: { title: 'Usuarios', noCache: true, permissions: ['auth.usuarios.listar'] }
+    },
+    {
+      path: 'permisos',
+      component: () => import('@/views/admin/auth/permissions/PermissionsView.vue'),
+      name: 'PermisosAuth',
+      meta: { title: 'Permisos', icon: 'md-playlistaddcheck-round', noCache: true, permissions: 'auth.permisos.listar' }
+      // meta: { title: 'Permisos', noCache: true, permissions: ['auth.permisos.listar'] }
+    },
+  ]
+}
+
+export default ronderosRoutes

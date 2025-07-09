@@ -1,0 +1,739 @@
+<template>
+  <CustomLoading :loading="loading" :loadingText="loadingText">
+    <el-form ref="denunciaFormRef" :model="persona" :rules="Object.assign({}, rulesPersona, rulesDenuncia)" label-position="top" v-on:submit.prevent>
+      <el-row :gutter="12">
+        <el-col :xs="24" :sm="12" :md="12">
+          <el-form-item label="Estado de Denuncia" prop="estado_denuncia">
+            <el-select v-model="form_denuncia.estado_denuncia" placeholder="Estado de Denuncia" style="width: 100%" searchable>
+              <el-option label="Pendiente" value="PENDIENTE"/>
+              <el-option label="Solucionado" value="SOLUCIONADO"/>
+            </el-select>
+          </el-form-item>
+          <!-- <el-form-item label="Número de Denuncia" prop="num_denuncia">
+          <el-input v-model="form_denuncia.num_denuncia" placeholder="Número de Denuncia" required/>
+        </el-form-item> -->
+        <el-form-item label="Fecha" prop="fecha">
+            <el-date-picker
+                style="width: 100%"
+                type="date"
+                format="DD/MM/YYYY"
+                value-format="YYYY-MM-DD"
+                v-model="form_denuncia.fecha"
+                placeholder="Fecha"
+            />
+          </el-form-item>
+
+
+          <el-form-item label="DNI" prop="denunciante_id">
+            <el-input v-model="form_denuncia.denunciante_id.docIdentidad"
+                      placeholder="DNI"
+                      maxlength="8"
+                      show-word-limit
+                      @keypress="isNumber($event)"
+                      oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);"
+                      class="input-with-select"
+                      @keyup.enter="buscarDatosPersonaDNI">
+              <template #append>
+                <el-button
+                    :icon="Search"
+                    :loading="btnBuscarDNILoading"
+                    @click="buscarDatosPersonaDNI"
+                />
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item label="Id" prop="persona_id">
+            <el-input v-model="persona.id" disabled/>
+          </el-form-item>
+          <el-form-item label="Nombres" prop="nombres">
+            <el-input v-model="persona.nombres" placeholder="Nombres" disabled/>
+          </el-form-item>
+          <el-row :gutter="10" type="flex" justify="end" class="mt-3">
+            <el-col :span="12">
+          <el-form-item label="Ap.Paterno" prop="apellido_paterno">
+            <el-input v-model="persona.apellido_paterno" placeholder="Ap. Paterno" disabled/>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="Ap. Materno" prop="apellido_materno">
+            <el-input v-model="persona.apellido_materno" placeholder="Ap. Materno" disabled/>
+          </el-form-item>
+        </el-col>
+        </el-row>
+        <el-form-item label="Dirección" prop="direccion">
+          <el-input v-model="persona.direccion" placeholder="Dirección"/>
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12" :md="12">
+          <el-form-item label="Tipo de Conflicto" prop="conflicto_id">
+            <el-select v-model="form_denuncia.tipo_conflicto_id" placeholder="Tipo de conflicto" style="width: 100%" searchable>
+              <el-option label="- Seleccione Tipo de Conflicto -" value="0"/>
+              <el-option
+                v-for="item in optionsConflictos"
+                :key="item.id"
+                :label="item.descripcion"
+                :value="item.id"
+              >
+              </el-option>
+            </el-select>
+          </el-form-item>
+        <el-form-item label="Descripción" prop="descripcion" style="width: 100%" >
+          <el-input v-model="form_denuncia.descripcion" placeholder="Descripción" type="textarea" maxlength="255"/>
+        </el-form-item>
+
+          <!-- <el-form-item label="Email" prop="email">
+            <el-input v-model.trim="persona.email" placeholder="mail@example.com" />
+          </el-form-item> -->
+
+        <el-row :gutter="10" type="flex" justify="end" class="mt-3">
+        <el-col :span="12">
+        <el-form-item label="Número de Libro" prop="libro" >
+          <el-input v-model="form_denuncia.libro" placeholder="Número de Libro" />
+        </el-form-item>
+      </el-col>
+        <el-col :span="12">
+        <el-form-item label="Número de Hoja" prop="hoja" >
+          <el-input v-model="form_denuncia.hoja" placeholder="Número de Hoja" />
+        </el-form-item>
+      </el-col>
+    </el-row>
+
+        <el-row type="flex" justify="center" :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="Región" prop="region_id" >
+              <el-select v-model="form_denuncia.region_id" placeholder="Región" style="width: 100%" @change="obtenerProvincias">
+                <el-option label="- Seleccione Región -" value="0"/>
+                <el-option
+                    v-for="item in optionsRegiones"
+                    :key="item.id"
+                    :label="item.descripcion"
+                    :value="item.id"
+                >
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Provincia" prop="provincia_id" >
+              <el-select v-model="form_denuncia.provincia_id" placeholder="Provincia" style="width: 100%"  @change="obtenerDistritos">
+                <el-option
+                    v-for="item in optionsProvincias"
+                    :key="item.id"
+                    :label="item.descripcion"
+                    :value="item.id"
+                >
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row type="flex" justify="center" :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="Distrito" prop="distrito_id" >
+              <el-select v-model="form_denuncia.distrito_id" placeholder="Distrito" style="width: 100%"  @change="obtenerSectores">
+                <el-option
+                    v-for="item in optionsDistritos"
+                    :key="item.id"
+                    :label="item.descripcion"
+                    :value="item.id"
+                >
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Sector" prop="sector_zona_id" >
+              <el-select v-model="form_denuncia.sector_zona_id" placeholder="Sector" style="width: 100%"  @change="obtenerBases">
+                <el-option
+                    v-for="item in optionsSectores"
+                    :key="item.id"
+                    :label="item.descripcion"
+                    :value="item.id"
+                >
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="Base" prop="base_id" >
+          <el-select v-model="form_denuncia.base_id" placeholder="Base" style="width: 100%" >
+            <el-option
+                v-for="item in optionsBases"
+                :key="item.id"
+                :label="item.descripcion"
+                :value="item.id"
+            >
+            </el-option>
+          </el-select>
+        </el-form-item>
+      </el-col>
+      </el-row>
+      <el-row :gutter="10" type="flex" justify="end" class="mt-3">
+      <el-col :span="24">
+        <div class="mt-3 d-flex justify-content-end" style="text-align: right">
+          <el-button type="primary" @click="showSelectPersonasModal" :icon="Plus">Agregar persona a denunciar</el-button>
+        </div>
+        <el-table
+            :data="detalleDenunciaDenunciados"
+            style="width: 100%"
+            max-height="500"
+            v-loading="loadingTable"
+            element-loading-text="Cargando..."
+            :empty-text="'No hay personas denunciadas...'"
+        >
+          <el-table-column
+              prop="denunciado_id"
+              label="Id"
+          />
+          <!-- <el-table-column
+              prop="docIdentidad"
+              label="DNI"
+          /> -->
+          <el-table-column
+              prop="nombres"
+              label="Nombres"
+          />
+          <el-table-column label="Apellidos">
+            <template #default="scope">
+              {{ scope.row.apellido_paterno }} {{ scope.row.apellido_materno }}
+            </template>
+          </el-table-column>
+          <el-table-column
+              prop="observaciones"
+              label="Observaciones"
+          />
+          <el-table-column align="right" width="120">
+            <template #default="scope">
+              <el-button
+                  size="small"
+                  type="danger"
+                  :icon="Delete"
+                  @click="eliminarRondero(scope.$index, scope.row)"
+                  :class="parseInt(scope.row.id_detalle_multa) === 0 ? '' : 'hidden'"
+              >
+                Quitar
+              </el-button>
+            </template>
+          </el-table-column>
+
+        </el-table>
+
+      </el-col>
+    </el-row>
+
+    </el-form>
+    <el-row :gutter="10" type="flex" justify="end" class="mt-3">
+      <el-button @click="close('canceled')">CANCELAR</el-button>
+      <el-button type="primary" @click="submitForm(denunciaFormRef)">GUARDAR</el-button>
+    </el-row>
+  </CustomLoading>
+  <el-dialog
+      top="10vh"
+      v-model="dialogListPersonasForm"
+      :width="calcularAnchoDialog('65%','98%')"
+      :close-on-click-modal="false"
+      destroy-on-close
+      tooltip-effect
+  >
+    <template #header>
+      <div class="dialog-header">
+        <span class="dialog-title">Registrar Persona a Denunciar</span>
+      </div>
+    </template>
+    <ListaDenunciados :base-id="id_base"
+                   @closeListDenunciados="dialogListPersonasForm = false"
+                   @enviar-denunciado="manejarDatosDelHijo"
+                   :ids-excluir="ids_excluir"
+    />
+  </el-dialog>
+</template>
+
+<script setup>
+import PersonaRequest from '@/api/publico/persona';
+import {nextTick, onMounted, reactive, ref} from 'vue'
+import {disabledPastDates} from "@/utils/utils.js";
+import DenunciaResource from '@/api/publico/denuncia';
+import ConflictoResource from '@/api/publico/conflicto';
+import {ElMessage, ElNotification} from "element-plus";
+import { Search } from '@element-plus/icons-vue'
+import Resource from '@/api/resource'
+import {calcularAnchoDialog} from "@/utils/responsive.js";
+import ListaDenunciados from "@/views/admin/publico/denuncias/components/ListaDenunciados.vue";
+import {CloseBold, Delete, Plus, Select} from "@element-plus/icons-vue";
+import CustomLoading from "@/components/loading/CustomLoading.vue";
+import RegionResource from '@/api/publico/region';
+import ProvinciaResource from '@/api/publico/provincia';
+import DistritoResource from '@/api/publico/distrito';
+import SectorResource from '@/api/publico/sector';
+import BaseResource from '@/api/publico/base';
+const regionResource = new RegionResource();
+const provinciaResource = new ProvinciaResource();
+const distritoResource = new DistritoResource();
+const sectorResource = new SectorResource();
+const baseResource = new BaseResource();
+const optionsRegiones = ref([])
+const optionsProvincias = ref([])
+const optionsDistritos = ref([])
+const optionsSectores = ref([])
+const optionsBases = ref([])
+const denunciaResource = new DenunciaResource();
+const conflictoResource = new ConflictoResource();
+const consultaDNIResource = new Resource('getdatadni')
+const btnBuscarDNILoading = ref(false)
+const ids_excluir = ref([])
+const optionsConflictos = ref([])
+const loadingSaveDialogForm = ref(false)
+const detalleDenunciaDenunciados = ref([])
+const loadingTable = ref(false)
+const loading = ref(false)
+const loadingText = ref('Cargando datos...')
+const dialogListPersonasForm = ref(false)
+const emit = defineEmits(['close','closeListDenunciados','reloadData'])
+const close = (status) => {
+  emit('close', status)
+  console.log('cerrar')
+  resetForm()
+}
+const reloadData = () => {
+  emit('reloadData')
+}
+
+
+const rules = ref({
+  fecha: [
+    {required: true, message: 'Fecha es requerido', trigger: 'blur'},
+  ],
+  descripcion: [
+    {required: true, message: 'Descripción es requerido', trigger: 'blur'},
+  ],
+  libro: [
+    {required: true, message: 'Número de Libro es requerido', trigger: 'blur'},
+  ],
+  hoja: [
+    {required: true, message: 'Número de Hoja es requerido', trigger: 'blur'},
+  ],
+  denunciante_id: [
+    {required: true, message: 'DNI denunciante es requerido', trigger: 'blur'},
+  ],
+  tipo_conflicto_id: [
+    {required: true, message: 'Tipo de conflicto es requerido', trigger: 'blur'},
+  ],
+  region_id: [
+    {required: true, message: 'Región es requerido', trigger: 'blur'},
+  ],
+  provincia_id: [
+    {required: true, message: 'Provincia es requerido', trigger: 'blur'},
+  ],
+  distrito_id: [
+    {required: true, message: 'Distrito es requerido', trigger: 'blur'},
+  ],
+  sector_zona_id: [
+    {required: true, message: 'Sector es requerido', trigger: 'blur'},
+  ],
+  base_id: [
+    {required: true, message: 'Base es requerido', trigger: 'blur'},
+  ],
+  estado_denuncia: [
+    {required: true, message: 'Estado es requerido', trigger: 'blur'},
+  ],
+})
+
+const form_denuncia = reactive({
+  idDenuncia: undefined,
+  region_id: '',
+  provincia_id: '',
+  distrito_id: '',
+  sector_zona_id: '',
+  base_id: '',
+  descripcion: '',
+  fecha: '',
+  tipo_conflicto_id: '',
+  num_denuncia: '',
+  libro: '',
+  hoja: '',
+  denunciante_id: '',
+  estado_denuncia: 'PENDIENTE',
+})
+
+const persona = reactive({
+  id: undefined,
+  docIdentidad: null,
+  nombres: '',
+  apellido_paterno: '',
+  apellido_materno: '',
+  fecha_nacimiento: '',
+  genero: '',
+  celular: '',
+  direccion: '',
+  email: '',
+})
+
+// const denunciado = reactive({
+//   denunciado_id: undefined,
+//   denunciado_nombres: '',
+//   denunciado_apellido_paterno: '',
+//   denunciado_apellido_materno: '',
+//   denunciado_celular: '',
+//   denunciado_direccion: '',
+//   denunciado_email: '',
+// })
+
+
+const resetForm = () => {
+  form_denuncia.id = undefined
+  form_denuncia.descripcion = ''
+  form_denuncia.fecha = ''
+  form_denuncia.num_denuncia = ''
+  form_denuncia.region_id = ''
+  form_denuncia.provincia_id = ''
+  form_denuncia.distrito_id = ''
+  form_denuncia.sector_zona_id = ''
+  form_denuncia.base_id = ''
+  form_denuncia.estado_denuncia = 'PENDIENTE'
+  detalleDenunciaDenunciados.value = []
+  ids_excluir.value = []
+  loadingTable.value = false
+}
+const props = defineProps({
+  idDenuncia: {
+    type: Number,
+    required: true,
+    default: 0
+  }
+})
+
+const cargarRegistro = async () => {
+  resetForm()
+  loadingSaveDialogForm.value = true
+  await denunciaResource
+      .get(props.idDenuncia)
+      .then((response) => {
+        const { data } = response
+        console.log(data)
+        nextTick(() => {
+          Object.assign(form_denuncia, data)
+          Object.assign(persona, data.denunciante_id)
+          let denunciados_array = [];
+          if(data.listaDenunciados.length > 0) {
+            data.listaDenunciados.forEach((item) => {
+              denunciados_array.push({
+                id: item.id,
+                denuncia_id: item.turno_id,
+                denunciado_id: item.denunciado.id,
+                // estado: item.estado,
+                nombres: item.denunciado.nombres,
+                apellido_paterno: item.denunciado.apellido_paterno,
+                apellido_materno: item.denunciado.apellido_materno,
+                observaciones: item.observaciones,
+              })
+
+             // ids_excluir.value.push(item.rondero_id);
+            })
+            detalleDenunciaDenunciados.value = denunciados_array;
+
+          }
+          //desabilitarBotones()
+        })
+
+
+
+
+      })
+      .catch((error) => {
+        console.log(error)
+        loadingSaveDialogForm.value = true
+        ElNotification({
+          type: 'error',
+          title: 'Error al recuperar el registro',
+          duration: 2000
+        })
+        close('canceled')
+      })
+}
+
+
+const validateForm = () => {
+  if (!form_denuncia.fecha) {
+    ElMessage.error('Todos los campos son requeridos');
+    return false
+  }
+  if (!form_denuncia.libro) {
+    ElMessage.error('Todos los campos son requeridos');
+    return false
+  }
+  if (!form_denuncia.hoja) {
+    ElMessage.error('Todos los campos son requeridos');
+    return false
+  }
+  if (!form_denuncia.denunciante_id) {
+    ElMessage.error('Todos los campos son requeridos');
+    return false
+  }
+  if (!form_denuncia.descripcion) {
+    ElMessage.error('Todos los campos son requeridos');
+    return false
+  }
+  if (!form_denuncia.tipo_conflicto_id) {
+    ElMessage.error('Todos los campos son requeridos');
+    return false
+  }
+  return true
+}
+const id_base = ref(0)
+const showSelectPersonasModal = () => {
+  if (!validateForm()) return
+  dialogListPersonasForm.value = true;
+}
+
+// Maneja el evento y almacena los datos recibidos
+const manejarDatosDelHijo = (dato) => {
+  detalleDenunciaDenunciados.value.push(dato);
+};
+// const manejadorIdsExcluir = (dato) => {
+//   ids_excluir.value.push(dato);
+// };
+
+const eliminarRondero = (index, row) => {
+  detalleDenunciaDenunciados.value.splice(index, 1)
+  if (row.rondero_id === form_denuncia.responsable_turno) {
+    form_denuncia.responsable_turno = '';
+  }
+  ids_excluir.value.splice(ids_excluir.value.indexOf(row.id), 1)
+}
+
+const fetchConflictos = async () => {
+  await conflictoResource.list()
+      .then(response => {
+        const { data } = response
+        optionsConflictos.value = data;
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+        ElMessage.error('Error al obtener datos');
+      });
+};
+onMounted(() => {
+  cargarRegistro()
+  fetchConflictos()
+  fetchRegiones()
+})
+
+const denunciaFormRef = ref(null);
+const submitForm = () => {
+  if (validateForm()) {
+
+    if(detalleDenunciaDenunciados.value.length === 0){
+      ElMessage.error('Tiene que agregar personas denunciadas')
+      return false
+    }
+    console.log(detalleDenunciaDenunciados)
+    // if (valid) {
+      if (form_denuncia.id === undefined) {
+        console.log('Guardar!!')
+      } else {
+        console.log('Editar!!')
+        saveDataForm()
+      }
+    // } else {
+    //   console.log('error submit!!')
+    //   return false
+    // }
+  }
+};
+const buscarDatosPersonaDNI = () => {
+  loading.value = true
+  console.log(form_denuncia.denunciante_id.docIdentidad)
+  loadingText.value = 'Buscando persona...'
+  if (!form_denuncia.denunciante_id.docIdentidad) {
+    this.$message({
+      message:
+          'Ingrese el nro de documento a buscar',
+      type: 'error',
+      duration: 5.6 * 1000
+    })
+    return false
+  }
+
+  btnBuscarDNILoading.value = true
+
+  consultaDNIResource
+        .get_data_dni(form_denuncia.denunciante_id.docIdentidad, 'DENUNCIANTE')
+        .then((data) => {
+          if(data.success === false) {
+            ElNotification({
+              type: 'error',
+              title: 'Incoveniente con el DNI',
+              message: 'El DNI no existe',
+              duration: 4000
+            })
+            btnBuscarDNILoading.value = false
+            return false
+          }
+
+          const getpersona = data
+          persona.id = getpersona.id;
+          persona.apellido_paterno = getpersona.paterno;
+          persona.apellido_materno = getpersona.materno;
+          persona.nombres = getpersona.nombres;
+          persona.fecha_nacimiento = getpersona.nacimiento;
+          persona.genero = getpersona.sexo === 'M' ? 'MASCULINO' : 'FEMENINO';
+          persona.celular = getpersona.fono;
+          persona.direccion = getpersona.direccion;
+          persona.email = getpersona.correo;
+          persona.foto = getpersona.foto;
+
+
+
+          btnBuscarDNILoading.value = false
+        })
+        .catch((error) => {
+          console.log(error)
+
+          btnBuscarDNILoading.value = false
+        })
+        .finally(() => {
+          btnBuscarDNILoading.value = false
+          loading.value = false
+        })
+}
+const fetchRegiones = async () => {
+  await regionResource.list()
+      .then(response => {
+        const { data } = response
+        optionsRegiones.value = data;
+        if (form_denuncia.region){
+          const region = optionsRegiones.value.find(region => region.id === form_denuncia.region.id);
+          if (region) {
+            form_denuncia.region_id = region.id;
+            obtenerProvincias(form_denuncia.region_id);
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+        ElMessage.error('Error al obtener datos');
+      });
+};
+const obtenerProvincias = async () => {
+  form_denuncia.provincia_id = '';
+  form_denuncia.distrito_id = '';
+  form_denuncia.sector_zona_id = '';
+  form_denuncia.base_id = '';
+  await provinciaResource.getProvincias(form_denuncia.region_id)
+      .then(response => {
+        optionsProvincias.value = response;
+        if (form_denuncia.provincia){
+          const provincia = optionsProvincias.value.find(provincia => provincia.id === form_denuncia.provincia.id);
+          if (provincia) {
+            form_denuncia.provincia_id = provincia.id;
+            obtenerDistritos(form_denuncia.provincia_id);
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+        ElMessage.error('Error al obtener datos');
+      });
+};
+const obtenerDistritos = async () => {
+  form_denuncia.distrito_id = '';
+  form_denuncia.sector_zona_id = '';
+  form_denuncia.base_id = '';
+  await distritoResource.getDistritos(form_denuncia.provincia_id)
+      .then(response => {
+        optionsDistritos.value = response;
+        if (form_denuncia.distrito){
+          const distrito = optionsDistritos.value.find(distrito => distrito.id === form_denuncia.distrito.id);
+          if (distrito) {
+            form_denuncia.distrito_id = distrito.id;
+            obtenerSectores(form_denuncia.distrito_id);
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+        ElMessage.error('Error al obtener datos');
+      });
+};
+const obtenerSectores = async () => {
+  form_denuncia.sector_zona_id = '';
+  form_denuncia.base_id = '';
+  await sectorResource.getSectores(form_denuncia.distrito_id)
+      .then(response => {
+        optionsSectores.value = response;
+        if (form_denuncia.sector){
+          const sector = optionsSectores.value.find(sector => sector.id === form_denuncia.sector.id);
+
+          if (sector) {
+            form_denuncia.sector_zona_id = sector.id;
+            obtenerBases(form_denuncia.sector_zona_id);
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+        ElMessage.error('Error al obtener datos');
+      });
+};
+
+const obtenerBases = async () => {
+  form_denuncia.base_id = '';
+  await baseResource.getBases(form_denuncia.sector_zona_id)
+      .then(response => {
+        optionsBases.value = response;
+        if (form_denuncia.base){
+          const base = optionsBases.value.find(base => base.id === form_denuncia.base.id);
+          if (base) {
+            form_denuncia.base_id = base.id;
+          }
+        }
+
+        loadingSaveDialogForm.value = false
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+        ElMessage.error('Error al obtener datos');
+      });
+};
+const saveDataForm = () => {
+  loadingSaveDialogForm.value = true
+  console.log(form_denuncia.tipo_conflicto_id)
+  denunciaResource.update(form_denuncia.id,{
+    num_denuncia: form_denuncia.num_denuncia,
+    tipo_conflicto_id: form_denuncia.tipo_conflicto_id.id,
+    descripcion: form_denuncia.descripcion,
+    fecha: form_denuncia.fecha,
+    denunciante_id: persona.id,
+    libro: form_denuncia.libro,
+    hoja: form_denuncia.hoja,
+    region_id: form_denuncia.region_id,
+    provincia_id: form_denuncia.provincia_id,
+    distrito_id: form_denuncia.distrito_id,
+    sector_zona_id: form_denuncia.sector_zona_id,
+    base_id: form_denuncia.base_id,
+    estado_denuncia: form_denuncia.estado_denuncia,
+    denunciados: detalleDenunciaDenunciados.value
+  })
+      .then(() => {
+        ElMessage({
+          message: 'Guardado con exito',
+          type: 'success'
+        })
+        loadingSaveDialogForm.value = false
+        reloadData();
+        close('success');
+      })
+      .catch((error) => {
+        ElMessage.error('Error al guardar')
+        console.log(error)
+        loadingSaveDialogForm.value = false
+      })
+      .finally(() => {
+        loadingSaveDialogForm.value = false
+      })
+}
+
+</script>
+<style scoped>
+
+</style>

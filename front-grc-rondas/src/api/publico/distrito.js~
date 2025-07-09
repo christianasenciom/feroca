@@ -1,0 +1,10 @@
+import Resource from '@/api/resource';
+
+class DistritoResource extends Resource {
+  constructor() {
+    super('publico/distritos');
+  }
+}
+
+export { DistritoResource as default }
+

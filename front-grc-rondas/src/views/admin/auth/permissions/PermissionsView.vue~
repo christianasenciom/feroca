@@ -1,0 +1,310 @@
+<template>
+  <div v-loading="loadingData">
+    <el-row :gutter="12">
+      <el-col :xs="24" :sm="24" :md="24" class="actions-component">
+        <el-input
+          v-model="listQuery.keyword"
+          placeholder="Buscar por nombre"
+          @change="getLista"
+        >
+          <template #append>
+            <el-button @click="getLista">
+              <template #icon>
+                <v-icon name="hi-search" class="pointer" />
+              </template>
+            </el-button>
+          </template>
+        </el-input>
+      </el-col>
+    </el-row>
+    <el-table
+      :data="items"
+      :border="true"
+      :stripe="true"
+      style="width: 100%; margin-top: 15px !important;"
+      header-row-class-name="table-header-custom"
+      row-class-name="table-row-custom"
+    >
+      <el-table-column prop="index" label="#" width="100" header-align="center" align="center" />
+      <el-table-column prop="name" label="NOMBRE"/>
+      <el-table-column align="center" width="150px">
+        <template #header>
+          <el-dropdown trigger="click" @command="handleActionsOpciones">
+            <span class="el-dropdown-link">
+              Opciones<el-icon class="el-icon--right"><arrow-down /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu ref="dropdown">
+                <el-dropdown-item
+                  :command="{ action: 'ADD' }"
+                  :disabled="isActionDisabled('auth.permisos.crear')"
+                >
+                  <span>
+                    <v-icon name="hi-plus" style="margin-right: 10px" />
+                    Agregar
+                  </span>
+                </el-dropdown-item>
+<!--                <el-dropdown-item-->
+<!--                  :command="{ action: 'EXPORT' }"-->
+<!--                  :disabled="isActionDisabled('auth.permisos.exportar')"-->
+<!--                >-->
+<!--                  <span>-->
+<!--                    <v-icon name="md-excel" style="margin-right: 10px" />-->
+<!--                    Exportar-->
+<!--                  </span>-->
+<!--                </el-dropdown-item>-->
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </template>
+        <template #default="scope">
+          <div>
+            <el-dropdown trigger="click" @command="handleRowActions">
+              <span class="el-dropdown-link">
+                Acciones<el-icon class="el-icon--right"><arrow-down /></el-icon>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <!-- <el-dropdown-item
+                    :command="{ item: scope.row, action: 'EDIT' }"
+                    :disabled="isActionDisabled('auth.permisos.actualizar')"
+                  >
+                    <span>
+                      <v-icon name="md-edit-round" style="margin-right: 10px" />
+                      Editar
+                    </span>
+                  </el-dropdown-item> -->
+                  <el-dropdown-item
+                    :command="{ item: scope.row, action: 'DELETE' }"
+                    :disabled="isActionDisabled('auth.permisos.eliminar')"
+                  >
+                    <span>
+                      <v-icon name="md-delete" style="margin-right: 10px" />
+                      Eliminar
+                    </span>
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+        </template>
+      </el-table-column>
+    </el-table>
+    <el-divider />
+    <el-row type="flex" justify="center">
+      <el-pagination
+        v-model:current-page="listQuery.page"
+        v-model:page-size="listQuery.limit"
+        :total="total"
+        :page-sizes="[10, 15, 25, 50]"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="getLista"
+        @current-change="getLista"
+      />
+    </el-row>
+    <el-dialog v-model="openDialogCreate" top="7vh" :width="calcularAnchoDialog('75%','98%')">
+      <template #header>
+        <h3>Agregar permiso</h3>
+      </template>
+      <create-permision @close="handleCloseCreate" />
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import Resource from '@/api/resource'
+import {
+  ArrowDown
+  // Plus
+} from '@element-plus/icons-vue'
+import { ElMessageBox, ElMessage, ElNotification } from 'element-plus'
+import CreatePermision from './components/CreatePermision.vue'
+import { calcularAnchoDialog } from '@/utils/responsive'
+import { useAuthStore } from "@/stores/AuthStore";
+const permisosResource = new Resource('auth/permisos')
+const exportResource = new Resource('auth/exportar/permisos')
+// const exportResource = new Resource('exportar/asociaciones')
+const authStore = useAuthStore()
+const validPermision = authStore.validPermision
+
+export default {
+  name: 'PermisosView',
+  components: {
+    ArrowDown,
+    CreatePermision
+  },
+  data() {
+    return {
+      items: [],
+      item_id: 'action',
+      total: 0,
+      listQuery: {
+        page: 1,
+        limit: 10,
+        provincia_id: undefined,
+        distrito_id: undefined,
+        ccpp_id: undefined,
+        keyBuscar: ''
+      },
+      action_text: 'create',
+      editedItem: { id: 0, name: '' },
+      dialogVisible: false,
+      loadingData: false,
+      openDialogCreate: false,
+      openDialogEdit: false,
+      loading: false,
+      titleForm: 'Agregar registro',
+      calcularAnchoDialog
+    }
+  },
+  computed: {},
+  mounted() {},
+  created() {
+    this.getLista()
+  },
+  methods: {
+    async getLista() {
+      const { limit, page } = this.listQuery
+      this.loadingData = true
+      await permisosResource.list(this.listQuery)
+      .then((response) => {
+        const { data, meta } = response
+        this.items = data
+        this.items.forEach((element, index) => {
+          element['index'] = (page - 1) * limit + index + 1
+        })
+        this.total = meta.total
+        this.loadingData = false
+      })
+      .catch(() => {
+        this.loadingData = false
+      })
+    },
+    handleSearch() {
+      this.listQuery.page = 1
+      this.getLista()
+    },
+    addItem() {
+      console.log('Agregar registro')
+      this.titleForm = 'Agregar registro'
+      this.openDialogCreate = true
+      this.$nextTick(() => {
+        this.item_id = 'create'
+      })
+    },
+    editItem(item) {
+      console.log(item)
+      this.titleForm = 'Modificar registro'
+      this.openDialogEdit = true;
+      this.$nextTick(() => {
+        this.item_id = item.id
+      })
+    },
+    deleteItem(row) {
+      const msg = `
+      ¿Seguro que desea eliminar el registro?<br /><br />
+      ${row.name}
+      `
+      ElMessageBox.confirm(
+        msg,
+        'Atención',
+        {
+          dangerouslyUseHTMLString: true,
+          confirmButtonText: 'Si, eliminar',
+          cancelButtonText: 'Cancelar',
+          type: 'warning',
+        }
+      )
+        .then(() => {
+          this.handleDelteItem(row.id)
+        })
+        .catch(() => {
+          ElMessage('Operación cancelada!')
+        })
+    },
+    handleDelteItem(id) {
+      this.loadingData = true
+      permisosResource
+      .destroy(id)
+      .then((response) => {
+        const {state, message} = response
+        this.$message({
+          type: state,
+          message
+        })
+        this.loadingData = false
+        this.handleSearch()
+      })
+      .catch(() => {
+        this.loadingData = false
+      })
+    },
+    handleClose(done) {
+      ElMessageBox.confirm('¡Seguro que desea cerrar esta ventana?')
+        .then(() => {
+          this.$nextTick(() => {
+            this.item_id = 'action'
+          })
+          done()
+        })
+        .catch(() => {
+          // catch error
+        })
+    },
+    parentProcessEmitForm(dataChild) {
+      console.log(dataChild)
+      this.dialogVisible = false
+      this.handleSearch()
+      this.$nextTick(() => {
+        this.item_id = 'action'
+      })
+    },
+    handleCloseCreate() {
+      this.openDialogCreate = false
+      this.getLista()
+    },
+    handleRowActions(commandData) {
+      const { item, action } = commandData
+      if (action === 'EDIT' && validPermision('auth.permisos.actualizar')) {
+        this.editItem(item)
+      } else if (action === 'DELETE' && validPermision('auth.permisos.eliminar')) {
+        this.deleteItem(item)
+      } else {
+        ElNotification({ message: 'Usted no tiene permiso para realizar esta acción', type: 'info' })
+      }
+    },
+    handleActionsOpciones(command) {
+      const { action } = command
+      if (action === 'ADD' && validPermision('auth.permisos.crear')) {
+        this.addItem()
+      } else if (action === 'EXPORT') {
+        this.exportarDatos()
+      } else {
+        ElNotification({message: 'Usted no tiene permiso para realizar esta acción', type: 'info' })
+      }
+    },
+    isActionDisabled(action) {
+      return !validPermision(action.toLowerCase());
+    },
+    exportarDatos() {
+        this.loadingData = true
+        exportResource
+          .exportar(this.listQuery)
+          .then((response) => {
+            this.loadingData = false
+            const link = document.createElement('a')
+            link.href = response
+            document.body.appendChild(link)
+            link.click()
+          })
+          .catch(() => {
+            this.loadingData = false
+          })
+          .finally(() => {
+            this.loadingData = false
+          })
+      }
+  }
+}
+</script>

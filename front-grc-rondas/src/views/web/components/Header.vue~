@@ -1,0 +1,20 @@
+<template>
+  <header class="bg-primary text-white py-3">
+    <nav class="container d-flex justify-content-between">
+      <h1>Rondas Campesinas</h1>
+      <ul class="d-flex list-unstyled">
+        <li><a href="#about" class="text-white mx-3">Acerca</a></li>
+        <li><a href="#services" class="text-white mx-3">Servicios</a></li>
+        <li><a href="#regions" class="text-white mx-3">Regiones</a></li>
+        <li><a href="#contact" class="text-white mx-3">Contacto</a></li>
+      </ul>
+    </nav>
+  </header>
+</template>
+
+<style>
+a {
+  text-decoration: none;
+  font-size: 1.2em;
+}
+</style>

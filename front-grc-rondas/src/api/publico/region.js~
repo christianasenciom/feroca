@@ -1,0 +1,10 @@
+import Resource from '@/api/resource';
+
+class RegionResource extends Resource {
+  constructor() {
+    super('infracciones/regiones');
+  }
+}
+
+export { RegionResource as default }
+

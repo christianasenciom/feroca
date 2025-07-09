@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito&display=swap');
+
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-family: 'Nunito', sans-serif;
+}
+
+a {
+  text-decoration: none;
+}
+
+.dark-switch {
+  --el-switch-on-color: var(--template-ligth-primary);
+  --el-switch-border-color: var(--el-color-info-light-3);
+  margin-right: 10px;
+}
+.dark-switch:hover {
+  --el-switch-border-color: var(--el-color-info);
+}

@@ -1,0 +1,12 @@
+:root {
+  --template-color-primary: #009ef7;
+  --template-ligth-primary: #56b2ec;
+  --el-menu-active-color: #607D8B;
+  --el-menu-text-color: #dee3ee;
+  --el-menu-bg-color: #009ef7;
+  --el-menu-hover-bg-color: #67a5e7;
+  --el-color-primary: #71b5fc;
+  --el-color-success: #46e864;
+  --el-color-warning: #eda726;
+  --el-color-danger: #e94560;
+}

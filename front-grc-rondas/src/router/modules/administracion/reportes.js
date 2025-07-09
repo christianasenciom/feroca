@@ -1,0 +1,46 @@
+import AdminLayout from '@/layout/admin/AdminLayout.vue'
+
+const reportesRoutes = {
+  path: '/reportes',
+  component: AdminLayout,
+  redirect: '/dashboard/index',
+  name: 'Reportes',
+  meta: {
+    title: 'Reportes',
+    icon: 'bi-search',
+    noCache: true,
+    // permissions: ['pub.administracion.menu']
+  },
+  children: [
+    {
+      path: 'denuncias-fechas',
+      component: () => import('@/views/admin/publico/reportes/DenunciasFechasView.vue'),
+      name: 'DenunciasFechas',
+      meta: { title: 'Denuncias por Fechas', icon: 'md-excel', noCache: true }
+      // meta: { title: 'Usuarios', noCache: true, permissions: ['auth.usuarios.listar'] }
+    },
+    {
+      path: 'denuncias-persona',
+      component: () => import('@/views/admin/publico/reportes/DenunciasPorPersonaView.vue'),
+      name: 'DenunciasPersona',
+      meta: { title: 'Denuncias por Persona', icon: 'md-excel', noCache: true }
+      // meta: { title: 'Usuarios', noCache: true, permissions: ['auth.usuarios.listar'] }
+    },
+    {
+      path: 'denuncias-criterios',
+      component: () => import('@/views/admin/publico/reportes/DenunciasCriteriosView.vue'),
+      name: 'DenunciasCriterios',
+      meta: { title: 'Denuncias por Criterios', icon: 'md-excel', noCache: true }
+      // meta: { title: 'Usuarios', noCache: true, permissions: ['auth.usuarios.listar'] }
+    },
+    {
+      path: 'asambleas-fechas',
+      component: () => import('@/views/admin/publico/reportes/AsambleasFechasView.vue'),
+      name: 'AsambleasFechas',
+      meta: { title: 'Asambleas por Fechas', icon: 'md-excel', noCache: true }
+      // meta: { title: 'Usuarios', noCache: true, permissions: ['auth.usuarios.listar'] }
+    },
+  ]
+}
+
+export default reportesRoutes

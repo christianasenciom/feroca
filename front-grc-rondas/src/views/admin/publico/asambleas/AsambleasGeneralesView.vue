@@ -1,0 +1,357 @@
+<template>
+  <div v-loading="listLoading"  element-loading-text="Cargando...">
+    <div class="el-header">
+      <h3>Lista de Asambleas</h3>
+      <div class="filter-container" style="float: right">
+        <el-input v-model="listQuery.keyword" placeholder="Buscar" class="input-with-select" clearable
+          style="max-width: 600px" @clear="handleBuscarDatos" @keyup.enter="handleBuscarDatos">
+          <template #append>
+            <el-button type="primary" :icon="Search" @click="handleBuscarDatos">
+              <span style="vertical-align: middle"> Buscar </span>
+            </el-button>
+          </template>
+        </el-input>
+      </div>
+    </div>
+    <el-table border fit :data="tableData" class="py-4">
+      <el-table-column label="ID" prop="id" align="center" width="70" />
+      <el-table-column label="Fecha" prop="fecha" :formatter="dateFormatter"/>
+      <el-table-column prop="base.descripcion" label="Base"/>
+<!--      <el-table-column label="Responsable">-->
+<!--        <template #default="scope">-->
+<!--          {{ scope.row.responsable.nombres }} {{ scope.row.responsable.apellido_paterno }} {{ scope.row.responsable.apellido_materno }}-->
+<!--        </template>-->
+<!--      </el-table-column>-->
+      <el-table-column prop="estado" label="Estado">
+        <template #default="scope">
+          <el-tag v-if="scope.row.estado" type="success">Activo</el-tag>
+          <el-tag v-else type="danger">Inactivo</el-tag>
+        </template>
+      </el-table-column>
+        <el-table-column align="right" width="150">
+        <template #header>
+          <el-button type="primary" class="ache-background-color-template" :icon="Plus" @click="openFormCreate" v-if="!isActionDisabled('pub.gruposvigilancia.crear')">
+            Agregar
+          </el-button>
+        </template>
+        <template #default="scope">
+          <el-tooltip
+              class="box-item"
+              effect="dark"
+              content="Asistencia"
+              placement="top-start"
+          >
+            <el-icon size="20" style="margin-right: 10px; cursor: pointer;" @click="openFormAsistencia(scope.row.id)" v-if="!isActionDisabled('pub.gruposvigilancia.actualizar')" color="#E3CB2DFF"><List /></el-icon>
+          </el-tooltip>
+          <el-tooltip
+              class="box-item"
+              effect="dark"
+              content="Notificar"
+              placement="top-start"
+          >
+            <el-icon size="20" style="margin-right: 10px; cursor: pointer;" @click="openFormSendMail(scope.row.id)" v-if="!isActionDisabled('pub.denuncias.actualizar')" color="#e3612d"><Message /></el-icon>
+          </el-tooltip>
+            <el-tooltip
+              class="box-item"
+              effect="dark"
+              content="Editar"
+              placement="top-start"
+          >
+            <el-icon size="20" style="margin-right: 10px; cursor: pointer;" @click="openFormEditar(scope.row.id)" v-if="!isActionDisabled('pub.gruposvigilancia.actualizar')" color="#E3CB2DFF"><Edit /></el-icon>
+          </el-tooltip>
+          <slot v-if="!isActionDisabled('pub.gruposvigilancia.eliminar')">
+            <el-tooltip
+                class="box-item"
+                effect="dark"
+                content="Desactivar"
+                placement="top-start"
+                v-if="scope.row.estado"
+            >
+              <el-icon size="20" style="margin-right: 10px; cursor: pointer;" @click="accionDesactivarRegistro(scope.row.id, '')" color="red"><Close /></el-icon>
+            </el-tooltip>
+            <el-tooltip
+                class="box-item"
+                effect="dark"
+                content="Activar"
+                placement="top-start"
+                v-else
+            >
+              <el-icon  size="20" style="margin-right: 10px; cursor: pointer;" @click="accionActivarRegistro(scope.row.id, '')" color="green"><Check /></el-icon>
+            </el-tooltip>
+          </slot>
+        </template>
+      </el-table-column>
+    </el-table>
+    <div class="paging">
+      <el-pagination v-if="meta.total > listQuery.limit" background v-model:currentPage="meta.current_page"
+        layout="total, prev, next, pager" :total="meta.total" @current-change="handleCurrentChange"
+        :page-size="meta.per_page" />
+    </div>
+
+    <el-dialog
+        top="5vh"
+        v-model="visibleDialogForm"
+        :width="calcularAnchoDialog('75%','98%')"
+        :close-on-click-modal="false"
+        destroy-on-close
+    >
+      <template #header>
+        <div class="dialog-header">
+          <span class="dialog-title">Crear Asamblea</span>
+        </div>
+      </template>
+
+      <CrearTurno @close="visibleDialogForm = false" @reload-data="fetchTurnos" />
+    </el-dialog>
+
+    <el-dialog
+        top="5vh"
+        v-model="visibleDialogFormEditar"
+        :width="calcularAnchoDialog('75%','98%')"
+        :close-on-click-modal="false"
+        destroy-on-close
+    >
+      <template #header>
+        <div class="dialog-header">
+          <span class="dialog-title">Editar Asamblea</span>
+        </div>
+      </template>
+
+      <EditarTurno @close="visibleDialogFormEditar = false" @reload-data="fetchTurnos" :id-turno="id_turno" />
+    </el-dialog>
+
+    <el-dialog
+        top="5vh"
+        v-model="visibleDialogFormAsistencia"
+        :width="calcularAnchoDialog('75%','98%')"
+        :close-on-click-modal="false"
+        destroy-on-close
+    >
+      <template #header>
+        <div class="dialog-header">
+          <span class="dialog-title">Asistencia Asamblea</span>
+        </div>
+      </template>
+
+      <AsistenciaView @close="visibleDialogFormAsistencia = false" @reload-data="fetchTurnos" :id-turno="id_turno" />
+    </el-dialog>
+    <el-dialog
+        top="5vh"
+        v-model="visibleDialogFormSendEmail"
+        :width="calcularAnchoDialog('40%','40%')"
+        :close-on-click-modal="false"
+        destroy-on-close
+    >
+      <template #header>
+        <div class="dialog-header">
+          <span class="dialog-title">Enviar invitación</span>
+        </div>
+      </template>
+
+      <SendMail @close="visibleDialogFormSendEmail = false" @reload-data="fetchDenuncias" :id-turno="id_turno" />
+    </el-dialog>
+
+  </div>
+</template>
+
+
+
+<style scoped>
+.paging {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  align-content: flex-start;
+  padding-top: 20px;
+}
+</style>
+<script>
+import {ref, reactive, onMounted, markRaw} from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import {Search, Plus, Edit, Delete, Check, Close, List, Message} from '@element-plus/icons-vue';
+
+import { useAuthStore } from "@/stores/AuthStore";
+import {dateFormatter, isActionDisabled} from "@/utils/utils.js";
+import TurnosResource from "@/api/publico/turnos";
+import {calcularAnchoDialog} from "@/utils/responsive.js";
+import CrearTurno from "@/views/admin/publico/asambleas/components/CrearTurno.vue";
+import EditarTurno from "@/views/admin/publico/asambleas/components/EditarTurno.vue";
+import AsistenciaView from "@/views/admin/publico/asambleas/components/AsistenciaView.vue";
+import SendMail from "@/views/admin/publico/asambleas/components/SendMail.vue";
+
+const turnosResource = new TurnosResource();
+
+export default {
+  name: 'AsambleasGeneralesView',
+  components: {AsistenciaView, List, EditarTurno, CrearTurno, Edit, Close, Check, SendMail, Message },
+  methods: {dateFormatter, calcularAnchoDialog, isActionDisabled},
+
+  setup() {
+    const id_turno = ref(0);
+    const authStore = useAuthStore()
+    const tableData = ref([]);
+    const meta = ref({});
+    const listLoading = ref(true);
+
+    const listQuery = reactive({
+      page: 1,
+      limit: 8,
+      keyword: '',
+      orderby: 'ASC',
+      tipo_reunion: 'Asamblea'
+    });
+
+    const visibleDialogForm = ref(false);
+    const visibleDialogFormEditar = ref(false);
+    const visibleDialogFormAsistencia = ref(false);
+    const visibleDialogFormSendEmail = ref(false);
+    const titleDialogForm = ref('');
+    const loadingSaveDialogForm = ref(false);
+    const accionDesactivarRegistro = (id, nombre) => {
+
+      ElMessageBox.confirm(
+        `Seguro que desea Desactivar el registro <em>${nombre}</em>?`,
+        'Atención',
+        {
+          top: '5vh',
+          icon: markRaw(Delete),
+          confirmButtonText: 'Si, desactivar',
+          cancelButtonText: 'Cancelar',
+          type: 'warning',
+          dangerouslyUseHTMLString: true
+        }
+      )
+        .then(() => {
+          turnosResource.inactivar(id)
+            .then(() => {
+              ElMessage.success('Registro desactivado');
+              fetchTurnos();
+            })
+            .catch((error) => {
+              console.error('Error desactivating data:', error);
+              ElMessage.error('Se ha producido un error al desactivar');
+            });
+        })
+        .catch(() => {
+          ElMessage.info('Operación cancelada');
+        });
+    };
+
+    const accionActivarRegistro = (id, nombre) => {
+
+      ElMessageBox.confirm(
+        `Seguro que desea Activar el registro <em>${nombre}</em>?`,
+        'Atención',
+        {
+          top: '5vh',
+          icon: markRaw(Check),
+          confirmButtonText: 'Si, activar',
+          cancelButtonText: 'Cancelar',
+          type: 'warning',
+          dangerouslyUseHTMLString: true
+        }
+      )
+        .then(() => {
+          turnosResource.activar(id)
+            .then(() => {
+              ElMessage.success('Registro activado');
+              fetchTurnos();
+            })
+            .catch((error) => {
+              console.error('Error activating data:', error);
+              ElMessage.error('Se ha producido un error al activar');
+            });
+        })
+        .catch(() => {
+          ElMessage.info('Operación cancelada');
+        });
+    };
+
+    const handleBuscarDatos = () => {
+      listQuery.page = 1;
+      fetchTurnos();
+    };
+
+    const handleCurrentChange = (val) => {
+      listQuery.page = val;
+      fetchTurnos();
+    };
+
+    const fetchTurnos = () => {
+      listLoading.value = true;
+      turnosResource.list(listQuery)
+        .then(response => {
+          tableData.value = response.data;
+          meta.value = response.meta;
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+          ElMessage.error('Error al obtener datos');
+        })
+        .finally(() => {
+          listLoading.value = false;
+        });
+    };
+
+    onMounted(fetchTurnos);
+
+    const openFormCreate = () => {
+      titleDialogForm.value = 'Crear Asamblea';
+      visibleDialogForm.value = true;
+    }
+
+    const openFormEditar = (id) => {
+      id_turno.value = id
+      titleDialogForm.value = 'Editar Asamblea';
+      visibleDialogFormEditar.value = true;
+
+    }
+    const openFormAsistencia = (id) => {
+      id_turno.value = id
+      titleDialogForm.value = 'Toma de Asistencia';
+      visibleDialogFormAsistencia.value = true;
+
+    }
+
+    const openFormSendMail = (id) => {
+      id_turno.value = id
+      titleDialogForm.value = 'Invitar a Asamblea';
+      visibleDialogFormSendEmail.value = true;
+    }
+
+    return {
+      authStore,
+      tableData,
+      meta,
+      listLoading,
+      listQuery,
+      visibleDialogForm,
+      visibleDialogFormEditar,
+      visibleDialogFormAsistencia,
+      visibleDialogFormSendEmail,
+      titleDialogForm,
+      loadingSaveDialogForm,
+
+      fetchTurnos,
+      handleBuscarDatos,
+      handleCurrentChange,
+      accionActivarRegistro,
+      accionDesactivarRegistro,
+
+      openFormCreate,
+      openFormSendMail,
+      openFormEditar,
+      openFormAsistencia,
+      id_turno,
+
+      Search,
+      Plus,
+      Edit,
+      Delete,
+
+    };
+  }
+};
+</script>

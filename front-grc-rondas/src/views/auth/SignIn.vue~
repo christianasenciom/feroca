@@ -1,0 +1,206 @@
+<template>
+  <div v-loading.fullscreen.lock="loading" class="sign-in-container authenticate-bg">
+    <el-row class="login-card" style="height: 100%" type="flex" align="middle" justify="center">
+      <el-col class="div_left" :span="12">
+        <el-card style="width: 100%; height: 100%">
+          <el-row class="logo" type="flex" justify="center">
+            <h3 class="titulo">CUNARC</h3>
+          </el-row>
+          <el-row style="justify-content: center; margin-bottom: 15px">
+            <p style="color: var(--el-color-info); font-size: 16px">Control de acceso al sistema</p>
+          </el-row>
+          <el-row>
+            <el-form ref="loginForm" :model="formValues" :rules="loginRules" label-position="top">
+              <el-row :gutter="12">
+                <el-col :xs="24" :sm="24" :md="24">
+                  <el-form-item prop="name">
+                    <el-input
+                      class="input_login"
+                      placeholder="Nro. Documento"
+                      v-model="formValues.name"
+                      @keyup.enter="login(loginForm)"
+                      maxlength="8"
+                      show-word-limit
+                      @keypress="isNumber($event)"
+                      oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);"
+                    >
+                      <template #prefix><el-icon size="20"><User /></el-icon></template>
+                    </el-input>
+                  </el-form-item>
+                </el-col>
+                <el-col :xs="24" :sm="24" :md="24">
+                  <el-form-item prop="password">
+                    <el-input
+                      class="input_login"
+                      placeholder="Contraseña"
+                      v-model="formValues.password"
+                      type="password"
+                      @keyup.enter="login(loginForm)"
+                    >
+                      <template #prefix><el-icon size="20"><lock /></el-icon></template>
+                    </el-input>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </el-form>
+          </el-row>
+          <el-row type="flex" justify="center" style="margin-top: 3%; margin-bottom: 2%">
+            <el-button
+              style="width: 100%"
+              v-loading.fullscreen.lock="loading"
+              type="primary"
+              @click="login(loginForm)"
+            >
+             Iniciar Sesion
+            </el-button>
+          </el-row>
+        </el-card>
+      </el-col>
+      <el-col class="div_right hidden-sm-and-down" :span="12">
+        <el-row type="flex" justify="center" class="signInContainerCard py-3">
+          <img
+            id="form-image"
+            src="@/assets/img/logo.png"
+            style="margin-top: 40px; width: 232px; height: auto"
+            alt=" Main
+            Image"
+          />
+        </el-row>
+<!--        <h2 style="margin-top: 12px">{{ appTitle }}</h2>-->
+      </el-col>
+    </el-row>
+  </div>
+</template>
+
+<script setup>
+import { onMounted, ref } from 'vue'
+import { useAuthStore } from '@/stores/AuthStore'
+import { useRouter } from 'vue-router'
+import { title } from '@/utils/name'
+import {Lock, User} from "@element-plus/icons-vue";
+import {ElNotification} from "element-plus";
+import {isNumber} from "@/utils/utils.js";
+
+
+const appTitle = ref(title ?? 'Nombre del Sistema')
+const router = useRouter()
+const authStore = useAuthStore()
+const loginForm = ref(null)
+const loading = ref(false)
+const formValues = ref({
+  name: '',
+  password: ''
+})
+
+const loginRules = ref({
+  name: [{ required: true, message: 'Campo obligatorio', trigger: 'blur' }],
+  password: [{ required: true, message: 'Campo obligatorio', trigger: 'blur' }]
+})
+
+const login = async (formEl) => {
+  if (!formEl) return
+  await formEl.validate((valid, fields) => {
+    if (valid) {
+      loading.value = true
+      authStore
+        .signIn(formValues.value)
+        .then(() => {
+          if (authStore.cambioPassword) {
+            ElNotification({
+              type: 'success',
+              title: '¡Bienvenido!',
+              duration: 2000
+            })
+            router.push('/dashboard')
+          } else {
+            ElNotification({
+              title: '¡Advertencia!',
+              message: 'Por favor cambie su contraseña',
+              type: 'warning',
+            })
+            router.push('/password');
+          }
+
+
+          loading.value = false
+        })
+        .catch((error) => {
+          loading.value = false
+          console.log(error)
+        })
+    } else {
+      console.log('error submit!', fields)
+    }
+  })
+}
+
+// reiniciar los valores del formulario cuando se monta el componente
+onMounted(() => {
+  formValues.value = {
+    name: '',
+    password: ''
+  }
+})
+</script>
+
+<style scoped>
+.sign-in-container {
+  display: flex;
+  width: 100vw;
+  height: 91vh;
+  justify-content: center;
+  align-items: center;
+}
+
+.titulo {
+  color: #889aa4;
+  font-size: 30px;
+  /* font-family: 'Times New Roman', Times, serif; */
+  margin-top: 5px;
+  margin-bottom: 15px;
+}
+
+/** Delete */
+.login-card {
+  text-align: center;
+  overflow: hidden;
+  display: flex;
+}
+.login-card .div_left {
+  display: inline-block;
+  background: #ffffff;
+  min-width: 300px;
+  width: 100%;
+  max-width: 370px;
+  height: 370px;
+  /* border-color: #dfdfdf;
+  border-style: solid;
+  border-width: 1px;
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;  */
+}
+
+.login-card .div_right {
+  display: inline-block;
+  background: var(--template-color-primary);
+  color: white;
+  min-width: 300px;
+  width: 100%;
+  max-width: 370px;
+  height: 370px;
+  /*
+  border-color: #dfdfdf;
+  border-style: solid;
+  border-width: 1px;
+   border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+*/
+  padding: 20px;
+
+}
+.input_login {
+width: 360px;
+height: 47px;
+border-radius: 15px;
+}
+</style>

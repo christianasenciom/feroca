@@ -1,0 +1,91 @@
+<template>
+  <div style="width: 100% !important">
+    <el-header class="header-custom">
+      <div style="display: flex">
+        <div style="flex: 1">
+          <el-row class="py-3 pl-3">
+            <el-col :xs="12" :sm="12" :md="12" :lg="12">
+              <div style="display: flex; align-items: center; overflow: hidden">
+                <v-icon
+                  v-if="PageInfo?.icon"
+                  :name="PageInfo?.icon"
+                  style="margin-right: 15px"
+                  scale="1.5"
+                />
+                <div v-else>
+                  <img
+                    src="@/assets/img/icono.png"
+                    alt="Icon"
+                    style="
+                      width: 30px;
+                      filter: drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.2));
+                      margin-right: 15px;
+                    "
+                  />
+                </div>
+                <h4 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
+                  {{ PageInfo?.title || 'SYS ACHE' }}
+                </h4>
+              </div>
+            </el-col>
+            <el-col :xs="12" :sm="12" :md="12" :lg="12">
+              <sidebar-user />
+            </el-col>
+          </el-row>
+        </div>
+      </div>
+    </el-header>
+    <el-main class="main-custom">
+      <el-scrollbar max-height="calc(100vh-120px)">
+        <div class="admin-main-container-body">
+          <el-card class="mb-3">
+            <RouterView />
+          </el-card>
+        </div>
+      </el-scrollbar>
+    </el-main>
+  </div>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/AuthStore'
+import SidebarUser from './SidebarUser.vue'
+const authStore = useAuthStore()
+const PageInfo = computed(() => {
+  return authStore.getCurrentPageInfo
+})
+</script>
+
+<style scoped>
+.header-custom {
+  padding: 8px 8px !important;
+  background: var(--el-bg-color-page) !important;
+  box-shadow: var(--el-box-shadow);
+}
+
+.main-custom {
+  position: relative;
+  /*top: 20px;*/
+  padding: 0 !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+
+.admin-main-container {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  padding: 0px 0 15px 0;
+  color: var(--el-text-color-primary);
+  transition: margin-left 0.3s ease;
+}
+
+.admin-main-container-body {
+  width: 100%;
+  height: calc(100vh - 130px);
+  padding: 5px 15px 10px 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+</style>
