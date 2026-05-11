@@ -11,32 +11,22 @@ use Illuminate\Support\Facades\Log;
 class ConfiguracionController extends Controller
 {
     /**
-     * Obtener la configuración actual de RENIEC
+     * Obtener toda la configuración
      */
-    public function getReniecConfig()
+    public function getAll()
     {
-        try {
-            \Log::info('getReniecConfig called');
-
-            $data = [
-                'RENIEC_REST_URL' => Configuracion::get('RENIEC_REST_URL'),
-                'RENIEC_DNI_USUARIO' => Configuracion::get('RENIEC_DNI_USUARIO'),
-                'RENIEC_PASSWORD' => Configuracion::get('RENIEC_PASSWORD'),
-                'RENIEC_RUC_USUARIO' => Configuracion::get('RENIEC_RUC_USUARIO'),
-                'RENIEC_TIMEOUT' => Configuracion::get('RENIEC_TIMEOUT', 60),
-            ];
-
-            \Log::info('Config data:', $data);
-
-            return response()->json($data);
-        } catch (\Exception $e) {
-            \Log::error('Error en getReniecConfig: ' . $e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        return response()->json([
+            'RENIEC_REST_URL' => Configuracion::get('RENIEC_REST_URL'),
+            'RENIEC_DNI_USUARIO' => Configuracion::get('RENIEC_DNI_USUARIO'),
+            'RENIEC_PASSWORD' => Configuracion::get('RENIEC_PASSWORD'),
+            'RENIEC_RUC_USUARIO' => Configuracion::get('RENIEC_RUC_USUARIO'),
+            'RENIEC_TIMEOUT' => Configuracion::get('RENIEC_TIMEOUT', 60),
+            'CONSULTA_RQ_URL' => Configuracion::get('CONSULTA_RQ_URL'),
+        ]);
     }
 
     /**
-     * Actualizar la configuración de RENIEC
+     * Actualizar configuración de RENIEC
      */
     public function updateReniec(Request $request)
     {
@@ -54,11 +44,30 @@ class ConfiguracionController extends Controller
         Configuracion::set('RENIEC_RUC_USUARIO', $request->RENIEC_RUC_USUARIO);
         Configuracion::set('RENIEC_TIMEOUT', $request->RENIEC_TIMEOUT);
 
-        Log::info('Configuración de RENIEC actualizada por: ' . auth()->user()->name);
+        Log::info('Configuración RENIEC actualizada', ['user' => auth()->user()->name]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Credenciales de RENIEC actualizadas correctamente'
+            'message' => 'Configuración de RENIEC actualizada correctamente'
+        ]);
+    }
+
+    /**
+     * Actualizar configuración de Consulta RQ
+     */
+    public function updateConsultaRQ(Request $request)
+    {
+        $request->validate([
+            'CONSULTA_RQ_URL' => 'required|url',
+        ]);
+
+        Configuracion::set('CONSULTA_RQ_URL', $request->CONSULTA_RQ_URL);
+
+        Log::info('URL de Consulta RQ actualizada', ['user' => auth()->user()->name]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'URL de Consulta RQ actualizada correctamente'
         ]);
     }
 
@@ -72,54 +81,11 @@ class ConfiguracionController extends Controller
         Configuracion::set('RENIEC_PASSWORD', 'C0nsultDni100426..');
         Configuracion::set('RENIEC_RUC_USUARIO', '20453744168');
         Configuracion::set('RENIEC_TIMEOUT', '60');
+        Configuracion::set('CONSULTA_RQ_URL', 'https://sispasvehapp.mininter.gob.pe/api-recompensas/requisitoriados');
 
         return response()->json([
             'success' => true,
             'message' => 'Valores por defecto cargados correctamente'
         ]);
-    }
-
-    /**
-     * Probar la conexión con las credenciales actuales
-     */
-    public function testConnection(Request $request)
-    {
-        $request->validate([
-            'dni' => 'required|string|size:8'
-        ]);
-
-        $url = Configuracion::get('RENIEC_REST_URL');
-        $usuario = Configuracion::get('RENIEC_DNI_USUARIO');
-        $password = Configuracion::get('RENIEC_PASSWORD');
-        $timeout = Configuracion::get('RENIEC_TIMEOUT', 60);
-
-        try {
-            $response = Http::timeout($timeout)
-                ->withOptions(['verify' => false])
-                ->post($url, [
-                    'dni' => $request->dni,
-                    'usuario' => $usuario,
-                    'password' => $password
-                ]);
-
-            if ($response->successful()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Conexión exitosa',
-                    'data' => $response->json()
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error en la conexión: ' . $response->body()
-                ], 500);
-            }
-        } catch (\Exception $e) {
-            Log::error('Error probando conexión RENIEC: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error de conexión: ' . $e->getMessage()
-            ], 500);
-        }
     }
 }

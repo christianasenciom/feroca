@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\WebAuthController;
 use App\Http\Controllers\QRController;
 use App\Http\Controllers\Admin\ConfiguracionController;
-
 // Ruta CSRF (pública)
 Route::get('/sanctum/csrf-cookie', function () {
     return response()->noContent();
@@ -64,12 +63,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     // CONFIGURACIONES (solo SuperAdministrador)
     // ==========================================
-    //Route::middleware(['role:SuperAdministrador'])->prefix('admin/configuracion')->group(function () {
-    //    Route::get('/reniec', [ConfiguracionController::class, 'getReniecConfig']);
-    //    Route::post('/reniec', [ConfiguracionController::class, 'updateReniec']);
-    //    Route::post('/reniec/defaults', [ConfiguracionController::class, 'seedDefaults']);
-    //    Route::post('/reniec/test', [ConfiguracionController::class, 'testConnection']);
-    //});
+    Route::middleware(['auth:sanctum'])->prefix('admin/configuracion')->group(function () {
+        Route::get('/', [ConfiguracionController::class, 'getAll']);
+        Route::post('/reniec', [ConfiguracionController::class, 'updateReniec']);
+        Route::post('/consulta-rq', [ConfiguracionController::class, 'updateConsultaRQ']);
+        Route::post('/defaults', [ConfiguracionController::class, 'seedDefaults']);
+    });
 
     // Incluir otros archivos de rutas
     require_once __DIR__ . '/api_h.php';

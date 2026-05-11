@@ -11,7 +11,7 @@ class Configuracion extends Model
 
     protected $table = 'configuraciones';
 
-    protected $fillable = ['clave', 'valor', 'tipo', 'descripcion'];
+    protected $fillable = ['clave', 'valor', 'tipo', 'descricion'];
 
     public static function get($clave, $default = null)
     {

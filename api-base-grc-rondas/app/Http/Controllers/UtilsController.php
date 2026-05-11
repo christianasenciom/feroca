@@ -8,6 +8,7 @@ use App\Services\ReniecService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use App\Models\Configuracion;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -56,7 +57,7 @@ class UtilsController extends Controller
 
     /**
      * Consulta datos de DNI usando el servicio REST oficial de RENIEC
-     * Las credenciales se toman del archivo .env
+     * Las credenciales se toman de la base de datos (tabla configuraciones)
      */
     public function getDataDNI($dni, $tipo_persona)
     {
@@ -115,20 +116,28 @@ class UtilsController extends Controller
                 ]);
             }
 
-            // 🔥 OBTENER CREDENCIALES DEL ARCHIVO .env
-            $restUrl = env('RENIEC_REST_URL');
-            $dniUsuario = env('RENIEC_DNI_USUARIO');
-            $password = env('RENIEC_PASSWORD');
-            $rucUsuario = env('RENIEC_RUC_USUARIO');
-            $timeout = env('RENIEC_TIMEOUT', 60);
+            // 🔥 OBTENER CREDENCIALES DE LA BASE DE DATOS
+            $restUrl = Configuracion::get('RENIEC_REST_URL');
+            $dniUsuario = Configuracion::get('RENIEC_DNI_USUARIO');
+            $password = Configuracion::get('RENIEC_PASSWORD');
+            $rucUsuario = Configuracion::get('RENIEC_RUC_USUARIO');
+            $timeout = (int) Configuracion::get('RENIEC_TIMEOUT', 60);
 
-            Log::info('📝 Usando credenciales de .env para RENIEC', [
+            // 🔥 LOGS PARA DEPURAR
+            Log::info('🔍 Credenciales desde BD:', [
+                'url' => $restUrl,
+                'usuario' => $dniUsuario,
+                'password' => $password ? '***' : 'vacío',
+                'timeout' => $timeout
+            ]);
+
+            Log::info('📝 Usando credenciales de BD para RENIEC', [
                 'url' => $restUrl,
                 'usuario' => $dniUsuario,
                 'timeout' => $timeout
             ]);
 
-            // Consultar RENIEC usando credenciales de .env
+            // Consultar RENIEC usando credenciales de BD
             $datosReniec = $this->consultarReniecConCredenciales($dni, $restUrl, $dniUsuario, $password, $rucUsuario, $timeout);
 
             $nombreCompleto = trim(($datosReniec['nombres'] ?? '') . ' ' .
@@ -183,7 +192,7 @@ class UtilsController extends Controller
     }
 
     /**
-     * Consultar RENIEC usando credenciales del .env
+     * Consultar RENIEC usando credenciales de la base de datos
      */
     private function consultarReniecConCredenciales($dni, $url, $usuario, $password, $rucUsuario, $timeout)
     {
@@ -257,11 +266,20 @@ class UtilsController extends Controller
 
     /**
      * Consulta de requisitoriados
+     * La URL se toma de la base de datos
      */
     public function ConsultarRQ(Request $request)
     {
-        $url = env('API_RECOMPENSAS_URL');
+        // 🔥 OBTENER URL DE LA BASE DE DATOS
+        $url = Configuracion::get('CONSULTA_RQ_URL');
+
+        if (!$url) {
+            $url = 'https://sispasvehapp.mininter.gob.pe/api-recompensas/requisitoriados';
+        }
+
         $nombres_apellidos = $request->input('nombreCompleto');
+
+        Log::info('🔍 Consulta RQ iniciada', ['url' => $url, 'nombre' => $nombres_apellidos]);
 
         if ($nombres_apellidos != '') {
             $payload = [

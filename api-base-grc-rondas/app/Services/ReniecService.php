@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use App\Models\Configuracion;
 
 class ReniecService
 {
@@ -16,10 +17,16 @@ class ReniecService
 
     public function __construct()
     {
-        $this->url = 'https://ws2.pide.gob.pe/Rest/RENIEC/Consultar';
-        $this->dniUsuario = env('RENIEC_DNI_USUARIO', '41884337');
-        $this->password = env('RENIEC_PASSWORD', 'C0nsultDni100426');
-        $this->rucUsuario = env('RENIEC_RUC_USUARIO', '20453744168');
+        // 🔥 USAR CONFIGURACIÓN DE LA BASE DE DATOS
+        $this->url = Configuracion::get('RENIEC_REST_URL', 'https://ws2.pide.gob.pe/Rest/RENIEC/Consultar');
+        $this->dniUsuario = Configuracion::get('RENIEC_DNI_USUARIO', '41884337');
+        $this->password = Configuracion::get('RENIEC_PASSWORD', 'C0nsultDni100426');
+        $this->rucUsuario = Configuracion::get('RENIEC_RUC_USUARIO', '20453744168');
+
+        Log::info('ReniecService inicializado', [
+            'url' => $this->url,
+            'usuario' => $this->dniUsuario
+        ]);
     }
 
     /**
@@ -28,10 +35,9 @@ class ReniecService
     private function determinarGeneroPorNombre($nombres): string
     {
         if (empty($nombres)) return '';
-        
-        // Nombres femeninos peruanos (250+)
+
         $nombresFemeninos = [
-            'MARIA', 'JUANA', 'ROSA', 'CARMEN', 'ANA', 'GLORIA', 'ELENA', 'LUCIA', 
+            'MARIA', 'JUANA', 'ROSA', 'CARMEN', 'ANA', 'GLORIA', 'ELENA', 'LUCIA',
             'PATRICIA', 'TERESA', 'DORA', 'FELIPA', 'MANUELA', 'VICTORIA', 'LILIANA',
             'MARGARITA', 'MERCEDES', 'RAQUEL', 'SANDRA', 'ISABEL', 'VERONICA', 'JULIA',
             'ANGELA', 'SILVIA', 'PAULA', 'CLAUDIA', 'RUTH', 'ESTHER', 'ELIZABETH',
@@ -60,8 +66,7 @@ class ReniecService
             'MAGDALENA', 'NATIVIDAD', 'ORLANDINA', 'PAZ', 'RAFAELA', 'SANTOSA',
             'TEOFILA', 'URDANIA', 'VIOLETA', 'WILLIAMS', 'XAVIERA', 'YENY', 'ZOILA', 'DUANY'
         ];
-        
-        // Nombres masculinos peruanos (250+)
+
         $nombresMasculinos = [
             'JUAN', 'JOSE', 'CARLOS', 'PEDRO', 'LUIS', 'MIGUEL', 'JORGE', 'RAUL',
             'FERNANDO', 'ALBERTO', 'MANUEL', 'JAVIER', 'DANIEL', 'DAVID', 'ALEX',
@@ -88,37 +93,31 @@ class ReniecService
             'NAPOLEON', 'ORESTES', 'PRIMITIVO', 'QUISUAR', 'ROGELIO', 'ROGER',
             'TADEO', 'URIEL', 'VALERIO', 'WENCESLAO', 'RONALD', 'YAMIL', 'ZACARIAS'
         ];
-        
+
         $nombreUpper = strtoupper($nombres);
-        
-        // Regla: nombres que terminan en "A" son femeninos (con excepciones)
         $ultimoCaracter = substr($nombreUpper, -1);
         $excepcionesTerminanA = ['ANDRES', 'ELIAS', 'LUCAS', 'NICOLAS', 'JONAS', 'JORGE', 'ARTURO', 'JULIO', 'JESUS', 'FRANCISCO', 'CARLOS', 'JUAN', 'JOSE'];
-        
+
         if ($ultimoCaracter === 'A' && strlen($nombreUpper) > 3 && !in_array($nombreUpper, $excepcionesTerminanA)) {
             return 'FEMENINO';
         }
-        
-        // Regla: nombres que terminan en "O" son masculinos
+
         if ($ultimoCaracter === 'O' && strlen($nombreUpper) > 2 && !in_array($nombreUpper, ['ASUNCIO', 'MARIA'])) {
             return 'MASCULINO';
         }
-        
-        // Buscar en lista femenina
+
         foreach ($nombresFemeninos as $fem) {
             if (strpos($nombreUpper, $fem) !== false) {
                 return 'FEMENINO';
             }
         }
-        
-        // Buscar en lista masculina
+
         foreach ($nombresMasculinos as $mas) {
             if (strpos($nombreUpper, $mas) !== false) {
                 return 'MASCULINO';
             }
         }
-        
-        // Si no se pudo determinar, calcular por el último dígito del DNI (fallback)
+
         return '';
     }
 
@@ -144,6 +143,10 @@ class ReniecService
             ];
 
             Log::info('RENIEC: Consultando DNI: ' . $dniConsultar);
+            Log::info('RENIEC: Usando credenciales desde BD', [
+                'url' => $this->url,
+                'usuario' => $this->dniUsuario
+            ]);
 
             $response = Http::withOptions([
                 'verify' => false,
@@ -155,39 +158,37 @@ class ReniecService
 
             $body = $response->body();
             Log::info('RENIEC: Status: ' . $response->status());
-            Log::info('RENIEC: Body: ' . $body);
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 if (isset($data['consultarResponse']['return'])) {
                     $return = $data['consultarResponse']['return'];
                     $coResultado = $return['coResultado'] ?? '9999';
                     $deResultado = $return['deResultado'] ?? '';
-                    
+
                     if ($coResultado !== '0000') {
                         throw new Exception($deResultado ?: 'Error en consulta RENIEC (Código: ' . $coResultado . ')');
                     }
-                    
+
                     $datosPersona = $return['datosPersona'] ?? [];
 
                     $nombres = $this->cleanText($datosPersona['prenombres'] ?? '');
                     $genero = $this->determinarGeneroPorNombre($nombres);
-                    
-                    // Si no se determinó por nombre, calcular por DNI
+
                     if (empty($genero)) {
                         $ultimoDigito = substr($dniConsultar, -1);
                         $genero = ($ultimoDigito % 2 == 0) ? 'FEMENINO' : 'MASCULINO';
                     }
-                    
+
                     $resultado = [
                         'dni' => $dniConsultar,
                         'nombres' => $nombres,
                         'apellido_paterno' => $this->cleanText($datosPersona['apPrimer'] ?? ''),
                         'apellido_materno' => $this->cleanText($datosPersona['apSegundo'] ?? ''),
                         'nombre_completo' => $this->cleanText(
-                            ($datosPersona['prenombres'] ?? '') . ' ' . 
-                            ($datosPersona['apPrimer'] ?? '') . ' ' . 
+                            ($datosPersona['prenombres'] ?? '') . ' ' .
+                            ($datosPersona['apPrimer'] ?? '') . ' ' .
                             ($datosPersona['apSegundo'] ?? '')
                         ),
                         'direccion' => $this->cleanText($datosPersona['direccion'] ?? ''),
@@ -199,18 +200,18 @@ class ReniecService
                         'foto_base64' => $datosPersona['foto'] ?? null,
                         'fuente' => 'reniec_rest'
                     ];
-                    
+
                     Cache::put($cacheKey, $resultado, now()->addDays(30));
-                    
+
                     return $resultado;
                 } else {
                     Log::error('RENIEC: Estructura inesperada: ' . json_encode($data));
                     throw new Exception('Estructura de respuesta inesperada');
                 }
             }
-            
+
             throw new Exception('HTTP Error: ' . $response->status() . ' - ' . $body);
-            
+
         } catch (Exception $e) {
             Log::error('RENIEC Error: ' . $e->getMessage());
             throw new Exception('Error al consultar RENIEC: ' . $e->getMessage());
