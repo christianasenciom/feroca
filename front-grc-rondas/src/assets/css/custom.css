@@ -1,0 +1,9 @@
+.paging {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    align-content: flex-start;
+    padding-top: 20px;
+}

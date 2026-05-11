@@ -1,0 +1,127 @@
+<?php
+
+namespace App\Http\Controllers\Publico;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Publico\ProgramacionTurno;
+use App\Models\Publico\Turno;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Response;
+use App\Http\Resources\Publico\ProgramacionTurnoResource;
+use App\Http\Requests\Admin\ProgramacionTurnoRequest;
+
+class ProgramacionTurnoController extends Controller
+{
+
+    public function index(Request $request)
+    {
+        $keyword = $request->keyword;
+
+        $programacionTurno = ProgramacionTurno::where(function ($query) use ($keyword) {
+            if($keyword != '' && $keyword != null) {
+                $query->where('tipo_asistencia','=','%'.$keyword.'%');
+            }
+        })->where('eliminado', false);
+
+        $programacionTurno = $programacionTurno->orderBy('id', 'desc');
+
+        return ProgramacionTurnoResource::collection($programacionTurno->paginate($request->limit));
+    }
+
+    public function storeDetalleTurno(Request $request, $idTurno)
+    {
+    try {
+
+            $turno = Turno::find($idTurno);
+            if($turno){
+                $ronderos = $request->input('ronderos');
+
+                if(empty($ronderos)){
+                    return response()->json('no existen ronderos');
+                }
+
+                $validator = Validator::make($request->all(),[
+                    'ronderos' => 'required|array',
+                    'ronderos.*.rondero_id' => 'required|integer|exists:rondero,id'
+                ]);
+
+                if($validator->fails()){
+                    return response()->json('Error');
+                }
+                DB::beginTransaction();
+                foreach($ronderos as $rondero){
+                    $turnoVigilancia = new ProgramacionTurno();
+                    $turnoVigilancia->rondero_id = $rondero["rondero_id"];
+                    $turnoVigilancia->turno_id = $idTurno;
+                    $turnoVigilancia->save();
+//                    Log::alert($turnoVigilancia);
+                }
+                DB::commit();
+                return response()->json([
+                    'state' => 'success',
+                    'message' => 'Lista se ha registrado correctamente',
+                ], Response::HTTP_OK);
+            }
+            else{
+                return response()->json('no existen turno con id = '.$idTurno);
+            }
+
+        } catch (Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return response()->json([],Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function update(ProgramacionTurnoRequest $request, string $id)
+    {
+        try {
+
+            DB::beginTransaction();
+
+            $listaRonderos = ProgramacionTurno::query()->where('turno_id','=',$id)->where('eliminado',false)->get();
+            //dd($listaRonderos);
+            if($listaRonderos)
+            {
+                DB::table('programacion_turno')->where('turno_id', $id)->delete();
+                $ronderos = $request->input('ronderos');
+                if(empty($ronderos)){
+                    return response()->json('no existen ronderos');
+                }
+
+                DB::beginTransaction();
+                foreach($ronderos as $rondero){
+                    $turnoVigilancia = new ProgramacionTurno();
+                    $turnoVigilancia->rondero_id = $rondero["rondero_id"];
+                    //$turnoVigilancia->tipo_asistencia = $rondero["tipo_asistencia"];
+                    //$turnoVigilancia->turno_id = $rondero["turno_id"];
+                    //$turnoVigilancia->turno_id = $rondero["observaciones"];
+                    $turnoVigilancia->save();
+                    Log::alert($turnoVigilancia);
+                }
+                DB::commit();
+                return response()->json([
+                    'state' => 'success',
+                    'message' => 'Lista se ha actualizado correctamente',
+                ], Response::HTTP_OK);
+            }
+            else
+            {
+                $response = [
+                    "state" => "error",
+                    "message" => "El registro no se puede actualizar o no existe.",
+                ];
+            }
+
+            return response()->json($response,Response::HTTP_OK);
+
+        } catch (Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return response()->json([],Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+}

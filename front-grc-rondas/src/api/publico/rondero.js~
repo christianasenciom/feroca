@@ -1,0 +1,17 @@
+import Resource from '../resource'
+import request from "@/utils/request.js";
+
+class RonderoRequest extends Resource {
+  constructor() {
+    super('publico/ronderos')
+  }
+
+  getRonderosByBase(id_base) {
+    return request({
+      url: `publico/bases/${id_base}/ronderos`,
+      method: 'get'
+    })
+  }
+}
+
+export { RonderoRequest as default }

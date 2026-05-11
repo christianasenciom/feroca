@@ -1,0 +1,10 @@
+import Resource from '@/api/resource';
+
+class ProvinciaResource extends Resource {
+  constructor() {
+    super('publico/provincias');
+  }
+}
+
+export { ProvinciaResource as default }
+

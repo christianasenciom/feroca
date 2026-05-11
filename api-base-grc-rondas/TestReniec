@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Http;
+
+class TestReniec extends Command
+{
+    protected $signature = 'test:reniec';
+    protected $description = 'Probar conexión con RENIEC';
+
+    public function handle()
+    {
+        $this->info('=== PROBANDO RENIEC REST ===');
+
+        $payload = [
+            'PIDE' => [
+                'nuDniConsulta' => '41884337',
+                'nuDniUsuario' => '41884337',
+                'nuRucUsuario' => '20453744168',
+                'password' => 'C0nsultDni100426'
+            ]
+        ];
+
+        $this->info('Payload enviado:');
+        $this->info(json_encode($payload, JSON_PRETTY_PRINT));
+
+        try {
+            $response = Http::withOptions(['verify' => false])
+                ->withHeaders(['Content-Type' => 'application/json; charset=UTF-8'])
+                ->post('https://ws2.pide.gob.pe/Rest/RENIEC/Consultar?out=json', $payload);
+
+            $this->info('Status Code: ' . $response->status());
+
+            $body = $response->body();
+            $this->info('Respuesta completa:');
+            $this->info($body);
+
+            // Intentar parsear como JSON
+            $json = $response->json();
+            if ($json) {
+                $this->info('Respuesta parseada como JSON:');
+                $this->info(print_r($json, true));
+            }
+
+        } catch (\Exception $e) {
+            $this->error('Error: ' . $e->getMessage());
+        }
+    }
+}

@@ -1,0 +1,366 @@
+<template>
+  <div v-loading="listLoading"  element-loading-text="Cargando...">
+    <div class="el-header">
+      <h3>Lista Denuncias</h3>
+      <div class="filter-container" style="float: right">
+        <el-input v-model="listQuery.keyword" placeholder="Buscar" class="input-with-select" clearable
+          style="max-width: 600px" @clear="handleBuscarDatos" @keyup.enter="handleBuscarDatos">
+          <template #append>
+            <el-button type="primary" :icon="Search" @click="handleBuscarDatos">
+              <span style="vertical-align: middle"> Buscar </span>
+            </el-button>
+          </template>
+        </el-input>
+      </div>
+    </div>
+    <el-table border fit :data="tableData" class="py-4">
+      <el-table-column label="ID" prop="id" align="center" width="70" />
+      <el-table-column label="Fecha" prop="fecha" :formatter="dateFormatter"/>
+      <el-table-column prop="tipo_conflicto_id.descripcion" label="Tipo de Conflicto"/>
+      <el-table-column label="Denunciante">
+        <template #default="scope">
+          {{ scope.row.denunciante_id.nombres }} {{ scope.row.denunciante_id.apellido_paterno }} {{ scope.row.denunciante_id.apellido_materno }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="estado_denuncia" label="Estado Denuncia">
+        <template #default="scope">
+          <el-tag v-if="scope.row.estado_denuncia === 'SOLUCIONADO'" type="success">SOLUCIONADO</el-tag>
+          <el-tag v-else type="danger">PENDIENTE</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="estado" label="Estado">
+        <template #default="scope">
+          <el-tag v-if="scope.row.estado" type="success">Activo</el-tag>
+          <el-tag v-else type="danger">Inactivo</el-tag>
+        </template>
+      </el-table-column>
+        <el-table-column align="right" width="150">
+        <template #header>
+          <el-button type="primary" class="ache-background-color-template" :icon="Plus" @click="openFormCreate" v-if="!isActionDisabled('pub.denuncias.crear')">
+            Agregar
+          </el-button>
+        </template>
+        <template #default="scope">
+          <el-tooltip
+              class="box-item"
+              effect="dark"
+              content="Notificar"
+              placement="top-start"
+          >
+            <el-icon size="20" style="margin-right: 10px; cursor: pointer;" @click="openFormSendMail(scope.row.id)" v-if="!isActionDisabled('pub.denuncias.actualizar')" color="#e3612d"><Message /></el-icon>
+          </el-tooltip>
+          <el-tooltip
+              class="box-item"
+              effect="dark"
+              content="Registrar Cita"
+              placement="top-start"
+          >
+            <el-icon size="20" style="margin-right: 10px; cursor: pointer;" @click="openFormRegCita(scope.row.id)" v-if="!isActionDisabled('pub.denuncias.actualizar')" color="#e3612d"><Calendar /></el-icon>
+          </el-tooltip>
+          <el-tooltip
+              class="box-item"
+              effect="dark"
+              content="Editar"
+              placement="top-start"
+          >
+            <el-icon size="20" style="margin-right: 10px; cursor: pointer;" @click="openFormEditar(scope.row.id)" v-if="!isActionDisabled('pub.denuncias.actualizar')" color="#E3CB2DFF"><Edit /></el-icon>
+          </el-tooltip>
+          <slot v-if="!isActionDisabled('pub.denuncias.eliminar')">
+            <el-tooltip
+                class="box-item"
+                effect="dark"
+                content="Desactivar"
+                placement="top-start"
+                v-if="scope.row.estado"
+            >
+              <el-icon size="20" style="margin-right: 10px; cursor: pointer;" @click="accionDesactivarRegistro(scope.row.id, '')" color="red"><Close /></el-icon>
+            </el-tooltip>
+            <el-tooltip
+                class="box-item"
+                effect="dark"
+                content="Activar"
+                placement="top-start"
+                v-else
+            >
+              <el-icon  size="20" style="margin-right: 10px; cursor: pointer;" @click="accionActivarRegistro(scope.row.id, '')" color="green"><Check /></el-icon>
+            </el-tooltip>
+          </slot>
+        </template>
+      </el-table-column>
+    </el-table>
+    <div class="paging">
+      <el-pagination v-if="meta.total > listQuery.limit" background v-model:currentPage="meta.current_page"
+        layout="total, prev, next, pager" :total="meta.total" @current-change="handleCurrentChange"
+        :page-size="meta.per_page" />
+    </div>
+
+    <el-dialog
+        top="5vh"
+        v-model="visibleDialogForm"
+        :width="calcularAnchoDialog('75%','98%')"
+        :close-on-click-modal="false"
+        destroy-on-close
+    >
+      <template #header>
+        <div class="dialog-header">
+          <span class="dialog-title">Registrar Denuncia</span>
+        </div>
+      </template>
+
+      <CrearDenuncia @close="visibleDialogForm = false" @reload-data="fetchDenuncias" />
+    </el-dialog>
+
+    <el-dialog
+        top="5vh"
+        v-model="visibleDialogFormEditar"
+        :width="calcularAnchoDialog('75%','98%')"
+        :close-on-click-modal="false"
+        destroy-on-close
+    >
+      <template #header>
+        <div class="dialog-header">
+          <span class="dialog-title">Editar Denuncia</span>
+        </div>
+      </template>
+
+      <EditarDenuncia @close="visibleDialogFormEditar = false" @reload-data="fetchDenuncias" :id-denuncia="id_denuncia" />
+    </el-dialog>
+
+    <el-dialog
+        top="5vh"
+        v-model="visibleDialogFormRegCita"
+        :width="calcularAnchoDialog('40%','40%')"
+        :close-on-click-modal="false"
+        destroy-on-close
+    >
+      <template #header>
+        <div class="dialog-header">
+          <span class="dialog-title">Registrar Cita</span>
+        </div>
+      </template>
+
+      <CrearCita @close="visibleDialogFormRegCita = false" @reload-data="fetchDenuncias" :id-denuncia="id_denuncia" />
+    </el-dialog>
+
+    <el-dialog
+        top="5vh"
+        v-model="visibleDialogFormSendEmail"
+        :width="calcularAnchoDialog('40%','40%')"
+        :close-on-click-modal="false"
+        destroy-on-close
+    >
+      <template #header>
+        <div class="dialog-header">
+          <span class="dialog-title">Notificar Denuncia</span>
+        </div>
+      </template>
+
+      <SendMail @close="visibleDialogFormSendEmail = false" @reload-data="fetchDenuncias" :id-denuncia="id_denuncia" />
+    </el-dialog>
+
+  </div>
+</template>
+
+
+
+<style scoped>
+.paging {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  align-content: flex-start;
+  padding-top: 20px;
+}
+</style>
+<script>
+import {ref, reactive, onMounted, markRaw} from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { Search, Plus, Edit, Delete, Check, Close, Calendar, Message } from '@element-plus/icons-vue';
+
+import { useAuthStore } from "@/stores/AuthStore";
+import {dateFormatter, isActionDisabled} from "@/utils/utils.js";
+import DenunciasResource from "@/api/publico/denuncia";
+import {calcularAnchoDialog} from "@/utils/responsive.js";
+import CrearDenuncia from "@/views/admin/publico/denuncias/components/CrearDenuncia.vue";
+import CrearCita from "@/views/admin/publico/denuncias/components/CrearCita.vue";
+import SendMail from "@/views/admin/publico/denuncias/components/SendMail.vue";
+import EditarDenuncia from "@/views/admin/publico/denuncias/components/EditarDenuncia.vue";
+
+
+const denunciasResource = new DenunciasResource();
+
+export default {
+  name: 'DenunciasView',
+  components: {EditarDenuncia, CrearDenuncia, Edit, Close, Check, CrearCita, SendMail, Calendar, Message},
+  methods: {dateFormatter, calcularAnchoDialog, isActionDisabled},
+
+  setup() {
+    const id_denuncia = ref(0);
+    const authStore = useAuthStore()
+    const tableData = ref([]);
+    const meta = ref({});
+    const listLoading = ref(true);
+
+    const listQuery = reactive({
+      page: 1,
+      limit: 8,
+      keyword: ''
+    });
+
+    const visibleDialogForm = ref(false);
+    const visibleDialogFormEditar = ref(false);
+    const visibleDialogFormRegCita = ref(false);
+    const visibleDialogFormSendEmail = ref(false);
+    const titleDialogForm = ref('');
+    const loadingSaveDialogForm = ref(false);
+    const accionDesactivarRegistro = (id, nombre) => {
+
+      ElMessageBox.confirm(
+        `Seguro que desea Desactivar el registro <em>${nombre}</em>?`,
+        'Atención',
+        {
+          top: '5vh',
+          icon: markRaw(Delete),
+          confirmButtonText: 'Si, desactivar',
+          cancelButtonText: 'Cancelar',
+          type: 'warning',
+          dangerouslyUseHTMLString: true
+        }
+      )
+        .then(() => {
+          denunciasResource.inactivar(id)
+            .then(() => {
+              ElMessage.success('Registro desactivado');
+              fetchDenuncias();
+            })
+            .catch((error) => {
+              console.error('Error desactivating data:', error);
+              ElMessage.error('Se ha producido un error al desactivar');
+            });
+        })
+        .catch(() => {
+          ElMessage.info('Operación cancelada');
+        });
+    };
+
+    const accionActivarRegistro = (id, nombre) => {
+
+      ElMessageBox.confirm(
+        `Seguro que desea Activar el registro <em>${nombre}</em>?`,
+        'Atención',
+        {
+          top: '5vh',
+          icon: markRaw(Check),
+          confirmButtonText: 'Si, activar',
+          cancelButtonText: 'Cancelar',
+          type: 'warning',
+          dangerouslyUseHTMLString: true
+        }
+      )
+        .then(() => {
+          denunciasResource.activar(id)
+            .then(() => {
+              ElMessage.success('Registro activado');
+              fetchDenuncias();
+            })
+            .catch((error) => {
+              console.error('Error activating data:', error);
+              ElMessage.error('Se ha producido un error al activar');
+            });
+        })
+        .catch(() => {
+          ElMessage.info('Operación cancelada');
+        });
+    };
+
+
+    const handleBuscarDatos = () => {
+      listQuery.page = 1;
+      fetchDenuncias();
+    };
+
+    const handleCurrentChange = (val) => {
+      listQuery.page = val;
+      fetchDenuncias();
+    };
+
+    const fetchDenuncias = () => {
+      listLoading.value = true;
+      denunciasResource.list(listQuery)
+        .then(response => {
+          tableData.value = response.data;
+          meta.value = response.meta;
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+          ElMessage.error('Error al obtener datos');
+        })
+        .finally(() => {
+          listLoading.value = false;
+        });
+    };
+
+    onMounted(fetchDenuncias);
+
+    const openFormCreate = () => {
+      titleDialogForm.value = 'Crear Denuncia';
+      visibleDialogForm.value = true;
+    }
+
+    const openFormRegCita = (id) => {
+      id_denuncia.value = id
+      titleDialogForm.value = 'Registrar Cita';
+      visibleDialogFormRegCita.value = true;
+    }
+
+    const openFormSendMail = (id) => {
+      id_denuncia.value = id
+      titleDialogForm.value = 'Notificar Denuncia';
+      visibleDialogFormSendEmail.value = true;
+    }
+
+    const openFormEditar = (id) => {
+      id_denuncia.value = id
+      titleDialogForm.value = 'Editar Denuncia';
+      visibleDialogFormEditar.value = true;
+
+    }
+
+    return {
+      authStore,
+      tableData,
+      meta,
+      listLoading,
+      listQuery,
+      visibleDialogForm,
+      visibleDialogFormEditar,
+      visibleDialogFormRegCita,
+      visibleDialogFormSendEmail,
+      titleDialogForm,
+      loadingSaveDialogForm,
+
+      fetchDenuncias,
+      handleBuscarDatos,
+      handleCurrentChange,
+      accionActivarRegistro,
+      accionDesactivarRegistro,
+
+      openFormCreate,
+      openFormRegCita,
+      openFormEditar,
+      openFormSendMail,
+      id_denuncia,
+
+      Search,
+      Plus,
+      Edit,
+      Delete,
+      Calendar,
+      Message
+
+    };
+  }
+};
+</script>

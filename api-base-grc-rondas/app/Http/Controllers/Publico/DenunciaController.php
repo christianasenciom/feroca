@@ -1,0 +1,523 @@
+<?php
+
+namespace App\Http\Controllers\Publico;
+
+use App\Http\Controllers\Controller;
+use App\Models\Publico\Denuncia;
+use App\Models\Publico\DetalleDenuncia;
+use App\Models\Publico\Persona;
+use App\Models\Publico\Base;
+use App\Models\Publico\Sector;
+use App\Models\Publico\Notificacion;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Response;
+use Auth;
+use App\Http\Resources\GlobalResource;
+use App\Http\Resources\Publico\DenunciaResource;
+use App\Http\Resources\Publico\NotificacionResource;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailables\Address;
+use App\Mail\NotificarDenuncia;
+
+class DenunciaController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request)
+    {
+        $keyword = $request->keyword;
+
+        $denuncias = Denuncia::query()->with('denunciante')->where('eliminado','=', false);
+
+        if($keyword != '' && $keyword != null) {
+            $denuncias = $denuncias->whereHas('denunciante', function($query) use ($keyword) {
+                $query->whereRaw("CONCAT(nombres, ' ', apellido_paterno, ' ', apellido_materno) ILIKE '%$keyword%'");
+            })->orWhereRaw("to_char(fecha, 'DD/MM/YYYY') ILIKE '%$keyword%'");
+            // ->orWhereHas('responsable.persona', function($query) use ($keyword) {
+            //     $query->whereRaw("CONCAT(nombres, ' ', apellido_paterno, ' ', apellido_materno) ILIKE '%$keyword%'");
+            // });
+        }
+
+
+        $denuncias = $denuncias->orderBy('id', 'desc');
+
+        return DenunciaResource::collection($denuncias->paginate($request->limit));
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        //return $request->denunciante['id'];
+        try {
+            DB::beginTransaction();
+
+                //registrar denunciante
+                $persona_existe = Persona::where('docIdentidad', $request->denunciante['docIdentidad'])->exists();
+                if(!$persona_existe) {
+                    // Si no existe la persona, creamos una nueva
+                    $persona = new Persona();
+                    $persona->documento_tipo = $request->input('documento_tipo') ?? 'DNI';
+                    $persona->apellido_paterno = $request->denunciante['apellido_paterno'];
+                    $persona->apellido_materno = $request->denunciante['apellido_materno'];
+                    $persona->nombres = $request->denunciante['nombres'];
+                    $persona->docIdentidad = $request->denunciante['docIdentidad'];
+                    $persona->tipo = $request->input('tipo') ?? 'Natural';
+                    $persona->fecha_nacimiento = $request->denunciante['fecha_nacimiento'];
+                    $persona->genero = $request->denunciante['genero'];
+                    $persona->email = $request->denunciante['email'];
+                    $persona->direccion = $request->denunciante['direccion'];
+                    $persona->celular = $request->denunciante['celular'];
+                    //$persona->foto = $imageName ?? '';
+                    $persona->save();
+                    DB::commit();
+                    $denunciante_id = $persona->id;
+                }
+                $persona_existe = Persona::where('docIdentidad', $request->denunciante['docIdentidad'])->first();
+                $denunciante_id = $persona_existe->id;
+                //$request->denunciante_id = $persona->id;
+                //return $persona->id;
+                $request = $request->all() + ['denunciante_id' => $denunciante_id] ;
+                //return $request['denunciados'];
+
+                $validator = Validator::make($request,[
+                    'denunciante_id' => 'required|exists:personas,id',
+                    'tipo_conflicto_id' => 'required|exists:conflicto,id',
+                    //'num_denuncia' => 'required|string',
+                    'libro' => 'required|string',
+                    'hoja' => 'required|string',
+                    'descripcion' => 'required|string',
+                    'fecha' => 'required|date',
+                    'region_id' => 'required|exists:region,id',
+                    'provincia_id' => 'required|exists:provincia,id',
+                    'distrito_id' => 'required|exists:distrito,id',
+                    'sector_zona_id' => 'required|exists:sector_zona,id',
+                    'base_id' => 'required|exists:base,id',
+                ]);
+                if($validator->fails()){
+                    return response()->json('Error1');
+                }
+                //return '$validator';
+                // $validated = $request->validate([
+                //     'denunciante_id' => 'required|exists:personas,id',
+                //     'tipo_conflicto_id' => 'required|exists:conflicto,id',
+                //     'num_denuncia' => 'required|string',
+                //     'libro' => 'required|string',
+                //     'hoja' => 'required|string',
+                //     'descripcion' => 'required|string',
+                //     'fecha' => 'required|date',
+                // ]);
+
+                $denuncia = new Denuncia;
+                $denuncia->num_denuncia = $request['num_denuncia'];
+                $denuncia->fecha = $request['fecha'];
+                $denuncia->descripcion = $request['descripcion'];
+                $denuncia->libro = $request['libro'];
+                $denuncia->hoja = $request['hoja'];
+                $denuncia->tipo_conflicto_id = $request['tipo_conflicto_id'];
+                $denuncia->denunciante_id = $request['denunciante_id'];
+                $denuncia->region_id = $request['region_id'];
+                $denuncia->provincia_id = $request['provincia_id'];
+                $denuncia->distrito_id = $request['distrito_id'];
+                $denuncia->sector_id = $request['sector_zona_id'];
+                $denuncia->base_id = $request['base_id'];
+                $denuncia->save();
+
+
+
+                $idDenuncia = $denuncia->id;
+
+                $denunciados = $request['denunciados'];
+
+                if(empty($denunciados)){
+                    return response()->json('no existen denunciados');
+                }
+
+                $validator = Validator::make($request['denunciados'],[
+                    //'denunciados' => 'required|array',
+                    'denunciados.*.denunciado_id' => 'required|integer|exists:denunciado,id'
+                ]);
+
+                if($validator->fails()){
+                    return response()->json('Error');
+                }
+
+                foreach($denunciados as $denunciado){
+                    $detalleDenuncia = new DetalleDenuncia();
+                    $detalleDenuncia->denunciado_id = $denunciado["denunciado_id"];
+                    $detalleDenuncia->observaciones = $denunciado["observaciones"];
+                    $detalleDenuncia->denuncia_id = $idDenuncia;
+                    $detalleDenuncia->save();
+                    //Log::alert($detalleDenuncia);
+                }
+                DB::commit();
+                return response()->json([
+                    'state' => 'success',
+                    'message' => 'Denuncia registrada correctamente',
+                ], Response::HTTP_OK);
+
+        } catch (Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return response()->json([],Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show( $id )
+    {
+        return new DenunciaResource(Denuncia::findOrFail($id));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, $id)
+    {
+        $denuncia = Denuncia::find($id);
+        //dd($denuncia);
+        try {
+
+            DB::beginTransaction();
+
+
+            $validated = $request->validate([
+                'denunciante_id' => 'required|exists:personas,id',
+                'tipo_conflicto_id' => 'required|exists:conflicto,id',
+                // 'num_denuncia' => 'required|string',
+                'libro' => 'required|string',
+                'hoja' => 'required|string',
+                'descripcion' => 'required|string',
+                'fecha' => 'required|date',
+                'region_id' => 'required|exists:region,id',
+                'provincia_id' => 'required|exists:provincia,id',
+                'distrito_id' => 'required|exists:distrito,id',
+                'sector_zona_id' => 'required|exists:sector_zona,id',
+                'base_id' => 'required|exists:base,id',
+            ]);
+            //dd($validated);
+
+                $denuncia->denunciante_id = $request->denunciante_id;
+                $denuncia->tipo_conflicto_id = $request->tipo_conflicto_id;
+                $denuncia->num_denuncia = $request->num_denuncia;
+                $denuncia->libro = $request->libro;
+                $denuncia->hoja = $request->hoja;
+                $denuncia->descripcion = $request->descripcion;
+                $denuncia->region_id = $request->region_id;
+                $denuncia->provincia_id = $request->provincia_id;
+                $denuncia->distrito_id = $request->distrito_id;
+                $denuncia->sector_id = $request->sector_zona_id;
+                $denuncia->base_id = $request->base_id;
+                $denuncia->estado_denuncia = $request->estado_denuncia;
+                $denuncia->save();
+                //dd($denuncia);
+                $denunciados = $request->input('denunciados');
+                //dd($denunciados);
+
+                if(empty($denunciados)){
+                    return response()->json('no existen denunciados');
+                }
+
+                $validator = Validator::make($request->all(),[
+                    // 'denunciados' => 'required|array',
+                    'denunciados.*.denunciado_id' => 'required|integer|exists:denunciado,id'
+                ]);
+
+                if($validator->fails()){
+                    return response()->json('Error');
+                }
+
+                DB::table('detalle_denuncia')->where('denuncia_id', $id)->delete();
+
+                foreach($denunciados as $denunciado){
+                    $detalleDenuncia = new DetalleDenuncia();
+                    $detalleDenuncia->denunciado_id = $denunciado["denunciado_id"];
+                    $detalleDenuncia->observaciones = $denunciado["observaciones"];
+                    $detalleDenuncia->denuncia_id = $id;
+                    $detalleDenuncia->save();
+                }
+
+                DB::commit();
+                return response()->json([
+                    'state' => 'success',
+                    'message' => 'Turno actualizado correctamente',
+                ], Response::HTTP_OK);
+
+        } catch (Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return response()->json([],Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy( string $id)
+    {
+        try {
+
+            $denuncia = Denuncia::query()->findOrFail($id);
+            $denuncia->eliminado = 1;
+            $denuncia->deleted_by = auth()->user()->id;
+            $denuncia->save();
+
+            $denunciados = DetalleDenuncia::where('denuncia_id','=',$id)->get();
+            foreach($denunciados as $denunciado){
+                $denunciado->eliminado = 1;
+                $denunciado->deleted_by = auth()->user()->id;
+                $denunciado->save();
+            }
+
+
+            $response = [
+                "state" => "success",
+                "message" => "Registro eliminado",
+            ];
+            return response()->json($response,Response::HTTP_OK);
+        } catch (Exception $e) {
+            Log::error($e);
+            return response()->json([],Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function activar($id)
+    {
+        if (auth()->user()->hasPermissionTo('pub.denuncias.activar', 'api')) {
+
+            $denuncia = Denuncia::query()->where('id','=',$id)->where('estado',false)->first();
+
+            if ($denuncia) {
+                DB::beginTransaction();
+                try {
+                    $denuncia->estado = true;
+                    $denuncia->save();
+                    DB::commit();
+                } catch (\Exception $ex) {
+                    Log::alert($ex);
+                    DB::rollback();
+                    return response()->json(['error' => $ex->getMessage()], Response::HTTP_BAD_REQUEST);
+                }
+                return response()->json(['success' => "Registro activado", 'data' => $denuncia], Response::HTTP_OK);
+            } else {
+                return response()->json(['error' => "Registro no encontrado o ya se enuentra activado"], Response::HTTP_NOT_FOUND);
+            }
+        } else {
+            $msg = [
+                'title' => 'Acceso denegado',
+                'message' => 'Usted no tiene permiso para realizar esta acción',
+            ];
+            return response()->json(['error' => $msg], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    public function desactivar($id)
+    {
+
+        if (auth()->user()->hasPermissionTo('pub.gruposvigilancia.desactivar', 'api')) {
+
+            $denuncia = Denuncia::query()->where('id','=',$id)->where('estado',true)->first();
+
+            if ($denuncia) {
+                DB::beginTransaction();
+                try {
+                    $denuncia->estado = false;
+                    $denuncia->save();
+                    DB::commit();
+                } catch (\Exception $ex) {
+                    Log::alert($ex);
+                    DB::rollback();
+                    return response()->json(['error' => $ex->getMessage()], Response::HTTP_BAD_REQUEST);
+                }
+                return response()->json(['success' => "Registro desactivado", 'data' => $denuncia], Response::HTTP_OK);
+            } else {
+                return response()->json(['error' => "Registro no encontrado o ya se encuentra desactivado"], Response::HTTP_NOT_FOUND);
+            }
+        } else {
+            $msg = [
+                'title' => 'Acceso denegado',
+                'message' => 'Usted no tiene permiso para realizar esta acción',
+            ];
+            return response()->json(['error' => $msg], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    public function storeCita(Request $request, $id)
+    {
+        $denuncia = Denuncia::find($id);
+        //dd($denuncia);
+        try {
+
+            DB::beginTransaction();
+
+
+            $validated = $request->validate([
+                'observaciones' => 'required|string',
+                'fecha_cita' => 'required|date',
+            ]);
+
+                $denuncia->observaciones = $request->observaciones;
+                $denuncia->fecha_cita = $request->fecha_cita;
+
+                $denuncia->save();
+                //dd($denuncia);
+
+                DB::commit();
+                return response()->json([
+                    'state' => 'success',
+                    'message' => 'cita registrada correctamente',
+                ], Response::HTTP_OK);
+
+        } catch (Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return response()->json([],Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function sendMail(Request $request)
+    {
+        //return $request;
+        $date = Carbon::now();
+        $message = 'ALERTA DE DENUNCIA';
+        $subject = 'ALERTA DE DENUNCIA';
+        if($request->base_id != 0){
+            //return $request;
+            try {
+                $cuenta = Base::query()->with('admin')->where('eliminado','=', false)->where('id',$request->base_id)->first();
+                $toEmail = $cuenta->admin->email;
+                if(!$toEmail || $toEmail != null || $toEmail != '')
+                $response = Mail::to($toEmail)->send(new NotificarDenuncia($message, $subject, $request));
+                $notificacion = new Notificacion();
+                $notificacion->denuncia_id = $request->denuncia_id;
+                $notificacion->fecha = $date;
+                $notificacion->destino = 'BASE: '.$cuenta->descripcion;
+                $notificacion->save();
+
+                return response()->json(['success' => "Correos enviados"], Response::HTTP_OK);
+            } catch (Exception $e) {
+                DB::rollback();
+                Log::error($e);
+                return response()->json([],Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+        }
+        elseif($request->sector_id != 0){
+            try {
+                $cuenta = Base::query()->with('admin','sector')->where('eliminado','=', false)->where('sector_zona_id',$request->sector_id)->get();
+                //return $cuenta->first()->sector;
+                foreach ($cuenta as $recipient) {
+                    $toEmail = $recipient->admin->email;
+                    if(!$toEmail || $toEmail != null || $toEmail != '')
+                    $response = Mail::to($toEmail)->send(new NotificarDenuncia($message, $subject, $request));
+                }
+                    $notificacion = new Notificacion();
+                    $notificacion->denuncia_id = $request->denuncia_id;
+                    $notificacion->fecha = $date;
+                    $notificacion->destino = 'BASES DEL SECTOR: '.$cuenta->first()->sector->descripcion;
+                    $notificacion->save();
+                return response()->json(['success' => "Correos enviados"], Response::HTTP_OK);
+            } catch (Exception $e) {
+                DB::rollback();
+                Log::error($e);
+                return response()->json([],Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+        }
+        elseif($request->distrito_id != 0){
+            //return $request;
+            try{
+                $distrito_id = $request->distrito_id;
+                $cuenta = Base::query()->with('admin','sector.distrito')
+                ->whereHas('sector', function ($query) use ($distrito_id) {
+                    $query->where([['sector_zona.distrito_id', $distrito_id]]);
+                })
+                ->where('eliminado','=', false)->get();
+                foreach ($cuenta as $recipient) {
+                    $toEmail = $recipient->admin->email;
+                    if(!$toEmail || $toEmail != null || $toEmail != '')
+                    $response = Mail::to($toEmail)->send(new NotificarDenuncia($message, $subject, $request));
+                }
+                $notificacion = new Notificacion();
+                $notificacion->denuncia_id = $request->denuncia_id;
+                $notificacion->fecha = $date;
+                $notificacion->destino = 'BASES DEL DISTRITO: '.$cuenta->first()->sector->distrito->descripcion;
+                $notificacion->save();
+                return response()->json(['success' => "Correos enviados"], Response::HTTP_OK);
+            } catch (Exception $e) {
+                DB::rollback();
+                Log::error($e);
+                return response()->json([],Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+        }
+        elseif($request->provincia_id != 0){
+            try{
+                $provincia_id = $request->provincia_id;
+                $cuenta = Base::query()->with('admin','sector','sector.distrito.provincia')
+                ->whereHas('sector.distrito', function ($query) use ($provincia_id) {
+                    $query->where([['distrito.provincia_id', $provincia_id]]);
+                })
+                ->where('eliminado','=', false)->get();
+                //return $cuenta;
+                foreach ($cuenta as $recipient) {
+                    $toEmail = $recipient->admin->email;
+                    if(!$toEmail || $toEmail != null || $toEmail != '')
+                    $response = Mail::to($toEmail)->send(new NotificarDenuncia($message, $subject, $request));
+                }
+                $notificacion = new Notificacion();
+                    $notificacion->denuncia_id = $request->denuncia_id;
+                    $notificacion->fecha = $date;
+                    $notificacion->destino = 'BASES DE LA PROVINCIA: '.$cuenta->first()->sector->distrito->provincia->descripcion;
+                    $notificacion->save();
+                return response()->json(['success' => "Correos enviados"], Response::HTTP_OK);
+            } catch (Exception $e) {
+                DB::rollback();
+                Log::error($e);
+                return response()->json([],Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+        }
+        elseif($request->region_id != 0){
+            try{
+                $region_id = $request->region_id;
+                $cuenta = Base::query()->with('admin','sector','sector.distrito.provincia.region')
+                ->whereHas('sector.distrito.provincia', function ($query) use ($region_id) {
+                    $query->where([['provincia.region_id', $region_id]]);
+                })
+                ->where('eliminado','=', false)->get();
+                foreach ($cuenta as $recipient) {
+                    $toEmail = $recipient->admin->email;
+                    if(!$toEmail || $toEmail != null || $toEmail != '')
+                    $response = Mail::to($toEmail)->send(new NotificarDenuncia($message, $subject, $request));
+                }
+                $notificacion = new Notificacion();
+                $notificacion->denuncia_id = $request->denuncia_id;
+                $notificacion->fecha = $date;
+                $notificacion->destino = 'BASES DE LA REGION: '.$cuenta->first()->sector->distrito->provincia->region->descripcion;
+                $notificacion->save();
+                return response()->json(['success' => "Correos enviados"], Response::HTTP_OK);
+            } catch (Exception $e) {
+                DB::rollback();
+                Log::error($e);
+                return response()->json([],Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+        }
+        else
+        return response()->json([],Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    public function getNotificaciones($id){
+
+        $notificaciones = Notificacion::with('denuncia')->where('denuncia_id',$id)->get();
+        //return response()->json($notificaciones,Response::HTTP_OK);
+        return NotificacionResource::collection($notificaciones);
+
+    }
+
+}
