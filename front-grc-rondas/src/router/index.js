@@ -74,7 +74,7 @@ export const routes = [
       }
     ]
   },
-  // 🔥 RUTA CONSULTA RQ (CON ADMINLAYOUT PARA QUE MUESTRE SIDEBAR)
+
   {
     path: '/consulta-rq',
     component: AdminLayout,
@@ -88,6 +88,26 @@ export const routes = [
           title: 'Consulta RQ',
           icon: 'Search',
           roles: ['SuperAdministrador', 'Administrador', 'RONDERO']
+        }
+      }
+    ]
+  },
+  {
+    path: '/admin/configuracion',
+    component: AdminLayout,
+    redirect: '/admin/configuracion/index',
+    meta: {
+      roles: ['SuperAdministrador']
+    },
+    children: [
+      {
+        path: 'index',
+        name: 'Configuracion',
+        component: () => import('@/views/admin/configuracion/ConfiguracionView.vue'),
+        meta: {
+          title: 'Configuración del Sistema',
+          icon: 'Setting',
+          roles: ['SuperAdministrador']
         }
       }
     ]

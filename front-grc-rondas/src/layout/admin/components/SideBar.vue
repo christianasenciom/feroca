@@ -76,6 +76,20 @@
               </el-menu-item>
             </el-sub-menu>
 
+            <!-- ==================== -->
+            <!-- CONFIGURACIÓN (solo SuperAdministrador) -->
+            <!-- ==================== -->
+            <el-menu-item
+              v-if="esSuperAdministrador"
+              index="/admin/configuracion/index"
+              @click="navegarA('/admin/configuracion/index')"
+            >
+              <el-icon><Setting /></el-icon>
+              <template #title>
+                <span>Configuración</span>
+              </template>
+            </el-menu-item>
+
           </el-menu>
         </el-scrollbar>
       </div>
@@ -89,7 +103,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore'
 import SidebarItem from './SidebarItem.vue'
 import { useAppStore } from '@/stores/AppStore'
-import { Service, Search, UserFilled, List, Document } from '@element-plus/icons-vue'
+import { Service, Search, UserFilled, List, Document, Setting } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const isSmallScreen = ref(false)
@@ -117,6 +131,12 @@ const mostrarAuditoria = computed(() => {
   const esSuperAdmin = roles.includes('SuperAdministrador')
   const esAdmin = roles.includes('Administrador')
   return esSuperAdmin || esAdmin
+})
+
+// 🔥 VERIFICAR SI ES SUPERADMINISTRADOR
+const esSuperAdministrador = computed(() => {
+  const roles = authStore.roles || []
+  return roles.includes('SuperAdministrador')
 })
 
 // 🔥 FUNCIÓN PARA VERIFICAR SI UN ITEM DEBE MOSTRARSE
@@ -217,9 +237,8 @@ onMounted(() => {
   window.addEventListener('resize', checkScreenSize)
 })
 
-onMounted(() => {
-  checkScreenSize()
-  window.addEventListener('resize', checkScreenSize)
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkScreenSize)
 })
 </script>
 
