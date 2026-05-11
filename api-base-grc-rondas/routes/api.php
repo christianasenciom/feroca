@@ -61,13 +61,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('admin/auditoria/estadisticas', [App\Http\Controllers\Admin\AuditoriaController::class, 'estadisticas']);
 
     // ==========================================
-    // CONFIGURACIONES (solo SuperAdministrador)
-    // ==========================================
+// CONFIGURACIONES (solo SuperAdministrador)
+// ==========================================
     Route::middleware(['auth:sanctum'])->prefix('admin/configuracion')->group(function () {
         Route::get('/', [ConfiguracionController::class, 'getAll']);
         Route::post('/reniec', [ConfiguracionController::class, 'updateReniec']);
         Route::post('/consulta-rq', [ConfiguracionController::class, 'updateConsultaRQ']);
         Route::post('/defaults', [ConfiguracionController::class, 'seedDefaults']);
+        Route::post('/reniec/actualizar-credencial', [ConfiguracionController::class, 'actualizarCredencial']);
     });
 
     // Incluir otros archivos de rutas

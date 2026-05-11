@@ -15,14 +15,26 @@ class ConfiguracionController extends Controller
      */
     public function getAll()
     {
-        return response()->json([
-            'RENIEC_REST_URL' => Configuracion::get('RENIEC_REST_URL'),
-            'RENIEC_DNI_USUARIO' => Configuracion::get('RENIEC_DNI_USUARIO'),
-            'RENIEC_PASSWORD' => Configuracion::get('RENIEC_PASSWORD'),
-            'RENIEC_RUC_USUARIO' => Configuracion::get('RENIEC_RUC_USUARIO'),
-            'RENIEC_TIMEOUT' => Configuracion::get('RENIEC_TIMEOUT', 60),
-            'CONSULTA_RQ_URL' => Configuracion::get('CONSULTA_RQ_URL'),
-        ]);
+        try {
+            return response()->json([
+                'RENIEC_REST_URL' => Configuracion::get('RENIEC_REST_URL') ?: '',
+                'RENIEC_DNI_USUARIO' => Configuracion::get('RENIEC_DNI_USUARIO') ?: '',
+                'RENIEC_PASSWORD' => Configuracion::get('RENIEC_PASSWORD') ?: '',
+                'RENIEC_RUC_USUARIO' => Configuracion::get('RENIEC_RUC_USUARIO') ?: '',
+                'RENIEC_TIMEOUT' => (int) Configuracion::get('RENIEC_TIMEOUT', 60),
+                'CONSULTA_RQ_URL' => Configuracion::get('CONSULTA_RQ_URL') ?: '',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error en getAll: ' . $e->getMessage());
+            return response()->json([
+                'RENIEC_REST_URL' => '',
+                'RENIEC_DNI_USUARIO' => '',
+                'RENIEC_PASSWORD' => '',
+                'RENIEC_RUC_USUARIO' => '',
+                'RENIEC_TIMEOUT' => 60,
+                'CONSULTA_RQ_URL' => '',
+            ]);
+        }
     }
 
     /**
@@ -87,5 +99,67 @@ class ConfiguracionController extends Controller
             'success' => true,
             'message' => 'Valores por defecto cargados correctamente'
         ]);
+    }
+    public function actualizarCredencial(Request $request)
+    {
+        $request->validate([
+            'credencialAnterior' => 'required|string',
+            'credencialNueva' => 'required|string|min:6',
+            'nuDni' => 'required|string|size:8',
+            'nuRuc' => 'required|string|size:11',
+        ]);
+
+        $url = 'https://ws2.pide.gob.pe/Rest/RENIEC/Actualizar';
+
+        try {
+            $response = Http::timeout(60)
+                ->withOptions(['verify' => false])
+                ->withHeaders([
+                    'Content-Type' => 'application/json; charset=UTF-8'
+                ])
+                ->post($url, [
+                    'PIDE' => [
+                        'credencialAnterior' => $request->credencialAnterior,
+                        'credencialNueva' => $request->credencialNueva,
+                        'nuDni' => $request->nuDni,
+                        'nuRuc' => $request->nuRuc,
+                    ]
+                ]);
+
+            $body = $response->body();
+
+            // Extraer valores usando expresiones regulares
+            preg_match('/<coResultado>(.*?)<\/coResultado>/', $body, $coMatch);
+            preg_match('/<deResultado>(.*?)<\/deResultado>/', $body, $deMatch);
+
+            $coResultado = $coMatch[1] ?? '9999';
+            $deResultado = $deMatch[1] ?? '';
+
+            Log::info('RENIEC Actualizar:', ['coResultado' => $coResultado, 'deResultado' => $deResultado]);
+
+            if ($coResultado === '0000') {
+                // Actualizar la contraseña en la base de datos
+                Configuracion::set('RENIEC_PASSWORD', $request->credencialNueva);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => "Contraseña actualizada correctamente de \"{$request->credencialAnterior}\" a \"{$request->credencialNueva}\"",
+                    'old_password' => $request->credencialAnterior,
+                    'new_password' => $request->credencialNueva
+                ], 200); // 🔥 Código 200 OK
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $deResultado ?: 'Error al actualizar la credencial'
+                ], 400);
+            }
+
+        } catch (Exception $e) {
+            Log::error('Error actualizando credencial RENIEC: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de conexión: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
