@@ -9,3 +9,19 @@ front-grc-rondas/node_modules/
 front-grc-rondas/dist/
 front-grc-rondas/.env.production
 front-grc-rondas/.env.development
+
+# Cache y logs de Laravel
+api-base-grc-rondas/bootstrap/cache/*.php
+api-base-grc-rondas/storage/framework/cache/
+api-base-grc-rondas/storage/logs/*.log
+api-base-grc-rondas/storage/framework/sessions/
+api-base-grc-rondas/storage/framework/views/
+
+# Directorio vendor (nunca debe ir al repositorio)
+api-base-grc-rondas/vendor/
+
+# Directorio node_modules
+front-grc-rondas/node_modules/
+
+# Directorio dist (build de producción)
+front-grc-rondas/dist/
