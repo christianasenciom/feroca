@@ -1,48 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="AutoImportSettings">
-    <option name="autoReloadType" value="SELECTIVE" />
+  <component name="LaravelPint">
+    <laravel_pint_settings>
+      <LaravelPintConfiguration tool_path="$PROJECT_DIR$/api-base-grc-rondas/vendor/bin/pint" />
+    </laravel_pint_settings>
   </component>
-  <component name="ChangeListManager">
-    <list default="true" id="ce372d22-c1d4-4e96-85fe-586e42545805" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Ronderil_backup.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/bootstrap/cache/packages.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/bootstrap/cache/packages.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/composer.json" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/composer.json" afterDir="false" />
-    </list>
-    <option name="SHOW_DIALOG" value="false" />
-    <option name="HIGHLIGHT_CONFLICTS" value="true" />
-    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
-    <option name="LAST_RESOLUTION" value="IGNORE" />
+  <component name="MessDetectorOptionsConfiguration">
+    <option name="transferred" value="true" />
   </component>
-  <component name="ComposerSettings" synchronizationState="SYNCHRONIZE">
-    <pharConfigPath>$PROJECT_DIR$/api-base-grc-rondas/composer.json</pharConfigPath>
-    <execution />
+  <component name="PHPCSFixerOptionsConfiguration">
+    <option name="transferred" value="true" />
   </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="PHP File" />
-        <option value="Vue Composition API Component" />
-      </list>
-    </option>
+  <component name="PHPCodeSnifferOptionsConfiguration">
+    <option name="highlightLevel" value="WARNING" />
+    <option name="transferred" value="true" />
   </component>
-  <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-  </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "christianasenciom"
-  }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/christianasenciom/feroca.git",
-    "accountId": "097cb1aa-2659-4d24-9b05-e96de3f4fb09"
-  }
-}]]></component>
-  <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe">
+  <component name="PhpIncludePathManager">
     <include_path>
       <path value="$PROJECT_DIR$/api-base-grc-rondas/vendor/bacon/bacon-qr-code" />
       <path value="$PROJECT_DIR$/api-base-grc-rondas/vendor/barryvdh/laravel-dompdf" />
@@ -181,66 +154,16 @@
       <path value="$PROJECT_DIR$/api-base-grc-rondas/vendor/thecodingmachine/safe" />
     </include_path>
   </component>
-  <component name="ProjectColorInfo">{
-  &quot;customColor&quot;: &quot;&quot;,
-  &quot;associatedIndex&quot;: 7
-}</component>
-  <component name="ProjectId" id="3DK20l1qVvFg3lGnE9JH9TZOMiO" />
-  <component name="ProjectViewState">
-    <option name="hideEmptyMiddlePackages" value="true" />
-    <option name="showLibraryContents" value="true" />
+  <component name="PhpProjectSharedConfiguration" php_language_level="8.1" />
+  <component name="PhpStanOptionsConfiguration">
+    <option name="transferred" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "C:/xampp/htdocs/feroca",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "prettierjs.PrettierConfiguration.Package": "C:\\laragon\\www\\feroca\\front-grc-rondas\\node_modules\\prettier",
-    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\PhpStorm 2025.2\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
-    "vue.rearranger.settings.migration": "true"
-  },
-  "keyToStringList": {
-    "vue.recent.templates": [
-      "Vue Composition API Component"
-    ]
-  }
-}]]></component>
-  <component name="RunManager">
-    <configuration name="Main" type="PHPUnitRunConfigurationType" factoryName="PHPUnit">
-      <TestRunner configuration_file="$PROJECT_DIR$/api-base-grc-rondas/phpunit.xml" scope="XML" use_alternative_configuration_file="true" />
-      <method v="2" />
-    </configuration>
+  <component name="PhpUnit">
+    <phpunit_settings>
+      <PhpUnitSettings configuration_file_path="$PROJECT_DIR$/api-base-grc-rondas/phpunit.xml" custom_loader_path="$PROJECT_DIR$/api-base-grc-rondas/vendor/autoload.php" use_configuration_file="true" />
+    </phpunit_settings>
   </component>
-  <component name="SharedIndexes">
-    <attachedChunks>
-      <set>
-        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-PS-253.30387.85" />
-        <option value="bundled-php-predefined-a98d8de5180a-0e0d91225499-com.jetbrains.php.sharedIndexes-PS-253.30387.85" />
-      </set>
-    </attachedChunks>
-  </component>
-  <component name="TaskManager">
-    <task active="true" id="Default" summary="Default task">
-      <changelist id="ce372d22-c1d4-4e96-85fe-586e42545805" name="Changes" comment="" />
-      <created>1778016221708</created>
-      <option name="number" value="Default" />
-      <option name="presentableId" value="Default" />
-      <updated>1778016221708</updated>
-      <workItem from="1778016223804" duration="4391000" />
-      <workItem from="1778260080479" duration="26416000" />
-      <workItem from="1778779977837" duration="405000" />
-    </task>
-    <servers />
-  </component>
-  <component name="TypeScriptGeneratedFilesManager">
-    <option name="version" value="3" />
+  <component name="PsalmOptionsConfiguration">
+    <option name="transferred" value="true" />
   </component>
 </project>

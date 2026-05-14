@@ -1,0 +1,11 @@
+# Backend
+api-base-grc-rondas/.env
+api-base-grc-rondas/vendor/
+api-base-grc-rondas/storage/logs/*.log
+api-base-grc-rondas/bootstrap/cache/*.php
+
+# Frontend
+front-grc-rondas/node_modules/
+front-grc-rondas/dist/
+front-grc-rondas/.env.production
+front-grc-rondas/.env.development
