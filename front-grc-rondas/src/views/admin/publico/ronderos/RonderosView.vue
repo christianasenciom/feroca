@@ -192,9 +192,9 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <el-divider />
-    
+
     <el-row type="flex" justify="center">
       <el-pagination
         style="font-size: 12px;"
@@ -214,7 +214,7 @@
       <template #header>Nuevo Rondero<hr style="border-top: 1px solid #ececec;"></template>
       <create-rondero @close="handleCloseCreate" />
     </el-dialog>
-    
+
     <el-dialog top="5vh" v-model="openDialogEdit" :width="calcularAnchoDialog('75%','98%')" :before-close="bcDialogEdit">
       <template #header>
         Editar Rondero
@@ -236,8 +236,6 @@ import { useAuthStore } from "@/stores/AuthStore";
 import CreateRondero from "@/views/admin/publico/ronderos/components/CreateRondero.vue";
 import EditRondero from "@/views/admin/publico/ronderos/components/EditRondero.vue";
 import VIcon from "@/components/Icons/SvgIcon.vue";
-import Multiselect from '@vueform/multiselect'
-import '@vueform/multiselect/themes/default.css'
 
 // Recursos para ubicación
 import RegionResource from '@/api/publico/region';
@@ -360,8 +358,8 @@ watch(() => query.keyword, (newVal, oldVal) => {
 // Cargar regiones al iniciar
 const cargarRegiones = async () => {
   try {
-    const response = await regionResource.list();
-    opcionesRegiones.value = response.data || [];
+    const { data } = await regionResource.list();
+    opcionesRegiones.value = data || [];
   } catch (error) {
     console.error('Error cargando regiones:', error);
   }
@@ -374,8 +372,8 @@ const cargarProvincias = async () => {
     return;
   }
   try {
-    const response = await provinciaResource.getProvincias(query.region_id);
-    opcionesProvincias.value = response || [];
+    const provincias = await provinciaResource.getProvincias(query.region_id);
+    opcionesProvincias.value = provincias || [];
   } catch (error) {
     console.error('Error cargando provincias:', error);
     opcionesProvincias.value = [];
@@ -389,8 +387,8 @@ const cargarDistritos = async () => {
     return;
   }
   try {
-    const response = await distritoResource.getDistritos(query.provincia_id);
-    opcionesDistritos.value = response || [];
+    const distritos = await distritoResource.getDistritos(query.provincia_id);
+    opcionesDistritos.value = distritos || [];
   } catch (error) {
     console.error('Error cargando distritos:', error);
     opcionesDistritos.value = [];
@@ -404,8 +402,8 @@ const cargarSectores = async () => {
     return;
   }
   try {
-    const response = await sectorResource.getSectores(query.distrito_id);
-    opcionesSectores.value = response || [];
+    const sectores = await sectorResource.getSectores(query.distrito_id);
+    opcionesSectores.value = sectores || [];
   } catch (error) {
     console.error('Error cargando sectores:', error);
     opcionesSectores.value = [];
@@ -419,8 +417,8 @@ const cargarBases = async () => {
     return;
   }
   try {
-    const response = await baseResource.getBases(query.sector_zona_id);
-    opcionesBases.value = response || [];
+    const basesData = await baseResource.getBases(query.sector_zona_id);
+    opcionesBases.value = basesData || [];
   } catch (error) {
     console.error('Error cargando bases:', error);
     opcionesBases.value = [];
@@ -440,14 +438,13 @@ const getLista = () => {
   loading.value = true;
   ronderoRequest
     .list(query)
-    .then((response) => {
-      const { data, meta } = response;
+    .then(({ data, meta }) => {
       tableData.value = data;
       total.value = meta.total;
       loading.value = false;
     })
-    .catch((error) => {
-      console.log(error);
+    .catch((err) => {
+      console.log(err);
       loading.value = false;
     });
 };
@@ -488,8 +485,8 @@ const handleCommandAcciones = ({ item, action }) => {
       });
       ronderoCarnetResource
         .generarPDF({ id: item.id, url_front: window.location.origin })
-        .then((response) => {
-          const blob = new Blob([response], { type: 'application/pdf' });
+        .then((pdfBlob) => {
+          const blob = new Blob([pdfBlob], { type: 'application/pdf' });
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
@@ -501,8 +498,8 @@ const handleCommandAcciones = ({ item, action }) => {
           setTimeout(() => URL.revokeObjectURL(url), 10000);
           loading.value = false;
         })
-        .catch((error) => {
-          console.log(error)
+        .catch((err) => {
+          console.log(err)
           loading.value = false;
         })
         .finally(() => {
@@ -528,13 +525,13 @@ const handleCommandAcciones = ({ item, action }) => {
     })
       .then(() => {
         ronderoRequest.destroy(item.id)
-          .then((response) => {
+          .then(() => {
             ElNotification({ title: 'Rondero eliminado', type: 'success', duration: 2000 });
             getLista();
           })
-          .catch((error) => console.log(error));
+          .catch((err) => console.log(err));
       })
-      .catch((error) => { console.log(error); });
+      .catch((err) => { console.log(err); });
   }
   else if (action == 'DESACTIVAR' && validPermision('pub.rondero.eliminar')) {
     const msg = `¿Seguro que desea desactivar el registro?<br /><br />${item.persona.docIdentidad}`
@@ -548,13 +545,13 @@ const handleCommandAcciones = ({ item, action }) => {
     })
       .then(() => {
         estadoRonderoResource.inactivar(item.id)
-          .then((response) => {
+          .then(() => {
             ElNotification({ title: 'Rondero desactivado', type: 'success', duration: 2000 });
             getLista();
           })
-          .catch((error) => console.log(error));
+          .catch((err) => console.log(err));
       })
-      .catch((error) => { console.log(error); });
+      .catch((err) => { console.log(err); });
   }
   else if (action == 'ACTIVAR' && validPermision('pub.rondero.eliminar')) {
     const msg = `¿Seguro que desea Activar el registro?<br /><br />${item.persona.docIdentidad}`
@@ -568,13 +565,13 @@ const handleCommandAcciones = ({ item, action }) => {
     })
       .then(() => {
         estadoRonderoResource.activar(item.id)
-          .then((response) => {
+          .then(() => {
             ElNotification({ title: 'Rondero Activo', type: 'success', duration: 2000 });
             getLista();
           })
-          .catch((error) => console.log(error));
+          .catch((err) => console.log(err));
       })
-      .catch((error) => { console.log(error); });
+      .catch((err) => { console.log(err); });
   }
 };
 

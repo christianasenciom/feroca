@@ -309,7 +309,7 @@ const provinciaResource = new ProvinciaResource();
 const distritoResource = new DistritoResource();
 const sectorResource = new SectorResource();
 const baseResource = new BaseResource();
-const consultaDNIResource = new Resource('getdatadni')
+import axios from 'axios';
 
 import {onMounted, reactive, ref, watch} from 'vue'
 import {isNumber} from "@/utils/utils.js";
@@ -695,7 +695,7 @@ const close = (status) => {
   resetFormCreateEdit();
 };
 
-const buscarDatosPersonaDNI = () => {
+const buscarDatosPersonaDNI = async () => {
   if (!persona.docIdentidad || persona.docIdentidad.length !== 8) {
     ElMessage.warning('Ingrese un DNI válido de 8 dígitos');
     return;
@@ -717,116 +717,94 @@ const buscarDatosPersonaDNI = () => {
   persona.direccion = '';
   persona.foto = '';
 
-  consultaDNIResource
-    .get_data_dni(persona.docIdentidad, 'RONDERO')
-    .then((response) => {
-      let responseData = response;
-      if (response && typeof response === 'object' && 'data' in response) {
-        responseData = response.data;
-      }
-      
-      if (responseData && responseData.success === true) {
-        const datos = responseData.datos || responseData;
-        
-        persona.apellido_paterno = datos.apellido_paterno || datos.apellidoPaterno || '';
-        persona.apellido_materno = datos.apellido_materno || datos.apellidoMaterno || '';
-        persona.nombres = datos.nombres || '';
-        
-        if (datos.fecha_nacimiento) {
-          persona.fecha_nacimiento = datos.fecha_nacimiento;
-        }
-        
-        if (datos.genero) {
-          persona.genero = datos.genero;
-        } else {
-          const ultimoDigito = persona.docIdentidad.slice(-1);
-          persona.genero = (parseInt(ultimoDigito) % 2 === 0) ? 'FEMENINO' : 'MASCULINO';
-        }
-        
-        if (datos.direccion) {
-          persona.direccion = datos.direccion;
-        }
-        
-        if (datos.foto_base64 || datos.foto) {
-          const fotoData = datos.foto_base64 || datos.foto;
-          if (fotoData && typeof fotoData === 'string' && fotoData.length > 100) {
-            if (fotoData.startsWith('/9j/')) {
-              persona.foto = `data:image/jpeg;base64,${fotoData}`;
-            } else if (fotoData.startsWith('data:image')) {
-              persona.foto = fotoData;
-            } else {
-              persona.foto = `data:image/jpeg;base64,${fotoData}`;
-            }
-          }
-        }
-        
-        const tieneDatos = persona.nombres || persona.apellido_paterno || persona.apellido_materno;
-        
-        if (tieneDatos) {
-          datosObtenidosAutomaticamente.value = true;
-          
-          if (responseData.fuente === 'reniec_rest') {
-            mensajeExito.value = '✅ Datos obtenidos de RENIEC (consulta oficial)';
-            tipoAlerta.value = 'success';
-          } else if (responseData.modo_prueba) {
-            mensajeExito.value = '🔧 Modo desarrollo: Usando datos de prueba';
-            tipoAlerta.value = 'info';
-          } else {
-            mensajeExito.value = 'Datos cargados correctamente';
-            tipoAlerta.value = 'success';
-          }
-          
-          consultaExitosa.value = true;
-          ElMessage.success(`Datos cargados para DNI ${persona.docIdentidad}`);
-        } else {
-          dniNoEncontrado.value = true;
-          ElMessage.warning('No se encontraron nombres para este DNI');
-        }
-        
-      } else {
-        const mensajeError = responseData?.message || responseData?.error || 'DNI no encontrado';
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+    const response = await axios.get(`${apiUrl}/web/verificar/dni/${persona.docIdentidad}`);
+
+    if (response.data.success) {
+      const datos = response.data.data;
+
+      const tieneNombres = datos.nombres && datos.nombres.trim() !== '';
+      const tieneApellidos = (datos.apellido_paterno && datos.apellido_paterno.trim() !== '') ||
+        (datos.apellido_materno && datos.apellido_materno.trim() !== '');
+
+      if (!tieneNombres && !tieneApellidos) {
+        dniNoEncontrado.value = true;
         ElNotification({
           type: 'warning',
-          title: 'DNI no encontrado',
-          message: mensajeError,
+          title: 'DNI sin datos',
+          message: `No se encontraron datos para el DNI ${persona.docIdentidad}`,
           duration: 5000
         });
-        dniNoEncontrado.value = true;
-        datosObtenidosAutomaticamente.value = false;
-      }
-    })
-    .catch((error) => {
-      let errorMessage = 'Error en la consulta al servicio DNI';
-      
-      if (error.response) {
-        if (error.response.status === 401) {
-          errorMessage = 'Su sesión ha expirado. Por favor, recargue la página.';
-        } else if (error.response.status === 404) {
-          errorMessage = 'El servicio de consulta no está disponible';
-        } else if (error.response.status === 500) {
-          errorMessage = 'Error interno del servidor';
-        } else if (error.response.data?.message) {
-          errorMessage = error.response.data.message;
-        }
-      } else if (error.request) {
-        errorMessage = 'Error de conexión. Verifique su red.';
+        btnBuscarDNILoading.value = false;
+        loading.value = false;
+        return;
       }
 
+      persona.apellido_paterno = datos.apellido_paterno || '';
+      persona.apellido_materno = datos.apellido_materno || '';
+      persona.nombres = datos.nombres || '';
+      persona.direccion = datos.direccion || '';
+
+      if (datos.genero) {
+        persona.genero = datos.genero;
+      } else {
+        const ultimoDigito = persona.docIdentidad.slice(-1);
+        persona.genero = (parseInt(ultimoDigito) % 2 === 0) ? 'FEMENINO' : 'MASCULINO';
+      }
+
+      if (datos.foto_base64) {
+        const fotoData = datos.foto_base64;
+        if (fotoData && typeof fotoData === 'string' && fotoData.length > 100) {
+          if (fotoData.startsWith('/9j/')) {
+            persona.foto = `data:image/jpeg;base64,${fotoData}`;
+          } else if (fotoData.startsWith('data:image')) {
+            persona.foto = fotoData;
+          } else {
+            persona.foto = `data:image/jpeg;base64,${fotoData}`;
+          }
+        }
+      }
+
+      datosObtenidosAutomaticamente.value = true;
+      mensajeExito.value = '✅ Datos obtenidos de RENIEC correctamente';
+      tipoAlerta.value = 'success';
+      consultaExitosa.value = true;
+      ElMessage.success(`Datos cargados para DNI ${persona.docIdentidad}`);
+
+    } else {
+      const mensajeError = response.data.message || 'DNI no encontrado';
       ElNotification({
-        type: 'error',
-        title: 'Error de consulta',
-        message: errorMessage,
-        duration: 6000
+        type: 'warning',
+        title: 'DNI no encontrado',
+        message: mensajeError,
+        duration: 5000
       });
-      
       dniNoEncontrado.value = true;
-      datosObtenidosAutomaticamente.value = false;
-    })
-    .finally(() => {
-      btnBuscarDNILoading.value = false;
-      loading.value = false;
-      loadingText.value = 'Cargando datos...';
+    }
+
+  } catch (error) {
+    let errorMessage = 'Error en la consulta al servicio DNI';
+
+    if (error.response?.status === 404) {
+      errorMessage = 'El servicio de verificación no está disponible';
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    }
+
+    ElNotification({
+      type: 'error',
+      title: 'Error de consulta',
+      message: errorMessage,
+      duration: 6000
     });
+    dniNoEncontrado.value = true;
+
+  } finally {
+    btnBuscarDNILoading.value = false;
+    loading.value = false;
+    loadingText.value = 'Cargando datos...';
+  }
 };
 </script>
 

@@ -209,8 +209,6 @@ const buscarPorDNI = async () => {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
     const response = await axios.get(`${apiUrl}/web/verificar/dni/${dni.value}`)
     
-    console.log('Respuesta del servidor:', response.data)
-    
     if (response.data.success) {
       resultado.value = response.data.data
       esRondero.value = response.data.es_rondero || false

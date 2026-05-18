@@ -211,4 +211,9 @@ class ProvinciaController extends Controller
         return response()->json($distritos,Response::HTTP_OK);
 
     }
+    public function getByRegion($regionId)
+    {
+        $provincias = Provincia::where('region_id', $regionId)->get();
+        return response()->json($provincias);
+    }
 }
