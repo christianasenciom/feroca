@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\WebAuthController;
 use App\Http\Controllers\QRController;
 use App\Http\Controllers\Admin\ConfiguracionController;
+
 // Ruta CSRF (pública)
 Route::get('/sanctum/csrf-cookie', function () {
     return response()->noContent();
@@ -52,6 +53,19 @@ Route::middleware('auth:sanctum')->group(function () {
     // Bases
     Route::get('publico/bases/ronderos', [App\Http\Controllers\Publico\BaseController::class, 'getRonderosByBase']);
 
+    // ==========================================
+    // MANTENIMIENTO (Regiones, Provincias, Distritos, Sectores, Cargos, Conflictos, Turnos, Denuncias)
+    // ==========================================
+    Route::resource('publico/regiones', App\Http\Controllers\Publico\RegionController::class);
+    Route::resource('publico/provincias', App\Http\Controllers\Publico\ProvinciaController::class);
+    Route::resource('publico/distritos', App\Http\Controllers\Publico\DistritoController::class);
+    Route::resource('publico/bases', App\Http\Controllers\Publico\BaseController::class);
+    Route::resource('publico/sectores', App\Http\Controllers\Publico\SectorController::class);
+    Route::resource('publico/cargos', App\Http\Controllers\Publico\CargoController::class);
+    Route::resource('publico/conflictos', App\Http\Controllers\Publico\ConflictoController::class);
+    Route::resource('publico/turnos', App\Http\Controllers\Publico\TurnoController::class);
+    Route::resource('publico/denuncias', App\Http\Controllers\Publico\DenunciaController::class);
+
     // Consultas RENIEC y REQUISITORIADOS
     Route::get('getdatadni/{dni}/{tipo_persona}', [App\Http\Controllers\UtilsController::class, 'getDataDNI']);
     Route::post('consultar-rq', [App\Http\Controllers\UtilsController::class, 'consultarRQ']);
@@ -61,8 +75,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('admin/auditoria/estadisticas', [App\Http\Controllers\Admin\AuditoriaController::class, 'estadisticas']);
 
     // ==========================================
-// CONFIGURACIONES (solo SuperAdministrador)
-// ==========================================
+    // CONFIGURACIONES (solo SuperAdministrador)
+    // ==========================================
     Route::middleware(['auth:sanctum'])->prefix('admin/configuracion')->group(function () {
         Route::get('/', [ConfiguracionController::class, 'getAll']);
         Route::post('/reniec', [ConfiguracionController::class, 'updateReniec']);
