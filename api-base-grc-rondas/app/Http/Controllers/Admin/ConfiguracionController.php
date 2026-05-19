@@ -56,7 +56,7 @@ class ConfiguracionController extends Controller
         Configuracion::set('RENIEC_RUC_USUARIO', $request->RENIEC_RUC_USUARIO);
         Configuracion::set('RENIEC_TIMEOUT', $request->RENIEC_TIMEOUT);
 
-        Log::info('Configuración RENIEC actualizada', ['user' => auth()->user()->name]);
+
 
         return response()->json([
             'success' => true,
@@ -75,7 +75,7 @@ class ConfiguracionController extends Controller
 
         Configuracion::set('CONSULTA_RQ_URL', $request->CONSULTA_RQ_URL);
 
-        Log::info('URL de Consulta RQ actualizada', ['user' => auth()->user()->name]);
+
 
         return response()->json([
             'success' => true,
@@ -135,7 +135,6 @@ class ConfiguracionController extends Controller
             $coResultado = $coMatch[1] ?? '9999';
             $deResultado = $deMatch[1] ?? '';
 
-            Log::info('RENIEC Actualizar:', ['coResultado' => $coResultado, 'deResultado' => $deResultado]);
 
             if ($coResultado === '0000') {
                 // Actualizar la contraseña en la base de datos

@@ -188,7 +188,7 @@ const loadConfig = async () => {
   loading.value = true
   try {
     const response = await axios.get('/admin/configuracion/reniec')
-    console.log('📥 Datos recibidos:', response.data)
+
 
     if (response.data) {
       // Los datos se asignan como VALOR REAL del campo
@@ -198,7 +198,6 @@ const loadConfig = async () => {
       form.value.RENIEC_RUC_USUARIO = response.data.RENIEC_RUC_USUARIO || ''
       form.value.RENIEC_TIMEOUT = response.data.RENIEC_TIMEOUT || 60
 
-      console.log('✅ Formulario actualizado:', form.value)
     }
   } catch (error) {
     console.error('Error cargando configuración:', error)

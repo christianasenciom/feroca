@@ -6,9 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="ce372d22-c1d4-4e96-85fe-586e42545805" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Admin/ConfiguracionController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Admin/ConfiguracionController.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/ProvinciaController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/ProvinciaController.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/RonderoController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/RonderoController.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/routes/api.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/routes/api.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/configuracion/ReniecConfigView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/configuracion/ReniecConfigView.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/RonderosView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/RonderosView.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/components/CreateRondero.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/components/CreateRondero.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/web/VerificarIdentidad.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/web/VerificarIdentidad.vue" afterDir="false" />
