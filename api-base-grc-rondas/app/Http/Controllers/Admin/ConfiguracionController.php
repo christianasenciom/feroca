@@ -137,7 +137,6 @@ class ConfiguracionController extends Controller
 
 
             if ($coResultado === '0000') {
-                // Actualizar la contraseña en la base de datos
                 Configuracion::set('RENIEC_PASSWORD', $request->credencialNueva);
 
                 return response()->json([
@@ -145,7 +144,7 @@ class ConfiguracionController extends Controller
                     'message' => "Contraseña actualizada correctamente de \"{$request->credencialAnterior}\" a \"{$request->credencialNueva}\"",
                     'old_password' => $request->credencialAnterior,
                     'new_password' => $request->credencialNueva
-                ], 200); // 🔥 Código 200 OK
+                ], 200);
             } else {
                 return response()->json([
                     'success' => false,

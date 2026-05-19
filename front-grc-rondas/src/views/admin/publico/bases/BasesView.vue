@@ -1,221 +1,186 @@
 <template>
-  <div>
-    <div class="el-header">
+  <div class="bases-view-container">
+    <div class="header-section">
       <h3>Lista de Bases</h3>
-      <div class="filter-container" style="float: right">
-        <el-input v-model="listQuery.keyword" placeholder="Buscar" class="input-with-select" clearable
-                  style="max-width: 600px" @clear="handleBuscarDatos" @keyup.enter="handleBuscarDatos">
+      <div class="filter-container">
+        <el-input
+          v-model="listQuery.keyword"
+          placeholder="Buscar"
+          class="search-input"
+          clearable
+          @clear="handleBuscarDatos"
+          @keyup.enter="handleBuscarDatos"
+        >
           <template #append>
             <el-button type="primary" :icon="Search" @click="handleBuscarDatos">
-              <span style="vertical-align: middle"> Buscar </span>
+              Buscar
             </el-button>
           </template>
         </el-input>
       </div>
     </div>
-    <el-table border fit :data="tableData" class="py-4" v-loading="listLoading">
-      <el-table-column label="ID" prop="id" align="center" width="70" />
-      <el-table-column label="Base" prop="nombre_descripcion" />
-      <el-table-column label="Sector / Zona" width="240">
-        <template #default="scope">
-          {{ scope.row.sector?.descripcion || scope.row.sector_zona?.descripcion || '-' }}
-        </template>
-      </el-table-column>
-      <el-table-column label="Distrito">
-        <template #default="scope">
-          {{ scope.row.distrito?.descripcion ||  '-' }}
-        </template>
-      </el-table-column>
-      <el-table-column label="Provincia">
-        <template #default="scope">
-          {{ scope.row.provincia?.descripcion || scope.row.sector_zona?.distrito?.provincia?.descripcion || '-' }}
-        </template>
-      </el-table-column>
-      <el-table-column label="Region">
-        <template #default="scope">
-          {{ scope.row.region?.descripcion || scope.row.sector_zona?.distrito?.provincia?.region?.descripcion || '-' }}
-        </template>
-      </el-table-column>
-      <el-table-column label="Partida Registral" width="120">
-        <template #default="scope">
-          {{ scope.row.numero_partida_registral || '-' }}
-        </template>
-      </el-table-column>
-      <el-table-column label="Administrador" width="200">
-        <template #default="scope">
-          <template v-if="scope.row.admin">
-            {{ (scope.row.admin.nombres + ' ' + scope.row.admin.apellido_paterno + ' ' + scope.row.admin.apellido_materno).toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) }}
+
+    <!-- Tabla responsiva sin saltos de línea -->
+    <div class="table-container">
+      <el-table
+        border
+        fit
+        :data="tableData"
+        v-loading="listLoading"
+        class="responsive-table"
+        :row-style="{ whiteSpace: 'nowrap' }"
+      >
+        <el-table-column label="ID" prop="id" align="center" width="60" />
+        <el-table-column label="Base" prop="nombre_descripcion" min-width="180" show-overflow-tooltip />
+        <el-table-column label="Sector / Zona" min-width="160" show-overflow-tooltip>
+          <template #default="scope">
+            {{ scope.row.sector?.descripcion || scope.row.sector_zona?.descripcion || '-' }}
           </template>
-          <template v-else>-</template>
-        </template>
-      </el-table-column>
-      <el-table-column prop="estado" label="Estado">
-        <template #default="scope">
-          <el-tag v-if="scope.row.estado" type="success">Activo</el-tag>
-          <el-tag v-else type="danger">Inactivo</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column align="right" width="120">
-        <template #header>
-          <el-button type="primary" class="ache-background-color-template" :icon="Plus" @click="openFormCreate" v-if="!isActionDisabled('pub.bases.crear')">
-            Agregar
-          </el-button>
-        </template>
-        <template #default="scope">
-          <el-tooltip
-            class="box-item"
-            effect="dark"
-            content="Editar"
-            placement="top-start"
-          >
-            <el-icon size="20" style="margin-right: 10px; cursor: pointer;" @click="openFormEditar(scope.row.id)" v-if="!isActionDisabled('pub.bases.actualizar')" color="#E3CB2DFF"><Edit /></el-icon>
-          </el-tooltip>
-          <slot v-if="!isActionDisabled('pub.bases.eliminar')">
-            <el-tooltip
-              class="box-item"
-              effect="dark"
-              content="Desactivar"
-              placement="top-start"
-              v-if="scope.row.estado"
-            >
-              <el-icon size="20" style="margin-right: 10px; cursor: pointer;" @click="accionDesactivarRegistro(scope.row.id, scope.row.nombre_descripcion)" color="red"><Close /></el-icon>
-            </el-tooltip>
-            <el-tooltip
-              class="box-item"
-              effect="dark"
-              content="Activar"
-              placement="top-start"
-              v-else
-            >
-              <el-icon size="20" style="margin-right: 10px; cursor: pointer;" @click="accionActivarRegistro(scope.row.id, scope.row.nombre_descripcion)" color="green"><Check /></el-icon>
-            </el-tooltip>
-          </slot>
-        </template>
-      </el-table-column>
-    </el-table>
-    <div class="paging">
-      <el-pagination v-if="meta.total > listQuery.limit" background v-model:currentPage="meta.current_page"
-                     layout="total, prev, next, pager" :total="meta.total" @current-change="handleCurrentChange"
-                     :page-size="meta.per_page" />
+        </el-table-column>
+        <el-table-column label="Distrito" min-width="140" show-overflow-tooltip>
+          <template #default="scope">
+            {{ scope.row.distrito?.descripcion || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="Provincia" min-width="140" show-overflow-tooltip>
+          <template #default="scope">
+            {{ scope.row.provincia?.descripcion || scope.row.sector_zona?.distrito?.provincia?.descripcion || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="Región" min-width="140" show-overflow-tooltip>
+          <template #default="scope">
+            {{ scope.row.region?.descripcion || scope.row.sector_zona?.distrito?.provincia?.region?.descripcion || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="Partida Registral" width="110" show-overflow-tooltip>
+          <template #default="scope">
+            {{ scope.row.numero_partida_registral || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="Administrador" min-width="180" show-overflow-tooltip>
+          <template #default="scope">
+            <template v-if="scope.row.admin">
+              {{ formatNombre(scope.row.admin.nombres, scope.row.admin.apellido_paterno, scope.row.admin.apellido_materno) }}
+            </template>
+            <template v-else>-</template>
+          </template>
+        </el-table-column>
+        <el-table-column prop="estado" label="Estado" width="80" align="center">
+          <template #default="scope">
+            <el-tag v-if="scope.row.estado" type="success" size="small">Activo</el-tag>
+            <el-tag v-else type="danger" size="small">Inactivo</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column align="center" width="120" fixed="right">
+          <template #header>
+            <el-button type="primary" size="small" :icon="Plus" @click="openFormCreate" v-if="!isActionDisabled('pub.bases.crear')">
+              Agregar
+            </el-button>
+          </template>
+          <template #default="scope">
+            <div class="action-buttons">
+              <el-tooltip effect="dark" content="Editar" placement="top">
+                <el-icon size="18" style="cursor: pointer; color: #E3CB2DFF;" @click="openFormEditar(scope.row.id)" v-if="!isActionDisabled('pub.bases.actualizar')">
+                  <Edit />
+                </el-icon>
+              </el-tooltip>
+              <slot v-if="!isActionDisabled('pub.bases.eliminar')">
+                <el-tooltip effect="dark" :content="scope.row.estado ? 'Desactivar' : 'Activar'" placement="top">
+                  <el-icon size="18" style="cursor: pointer; margin-left: 12px;" :color="scope.row.estado ? 'red' : 'green'" @click="scope.row.estado ? accionDesactivarRegistro(scope.row.id, scope.row.nombre_descripcion) : accionActivarRegistro(scope.row.id, scope.row.nombre_descripcion)">
+                    <Close v-if="scope.row.estado" />
+                    <Check v-else />
+                  </el-icon>
+                </el-tooltip>
+              </slot>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
 
-    <!-- Dialogo para crear o editar base -->
-    <el-dialog v-model="visibleDialogForm" :close-on-click-modal="false" top="7vh" width="550" :title="titleDialogForm">
-      <div>
-        <el-form ref="formCreateEditBase" v-loading="loadingSaveDialogForm" :model="modelBase"
-                 :rules="reglasValidacion" status-icon label-width="140px" label-position="top" v-on:submit.prevent>
+    <div class="paging">
+      <el-pagination
+        v-if="meta.total > listQuery.limit"
+        background
+        v-model:current-page="meta.current_page"
+        layout="total, prev, pager, next"
+        :total="meta.total"
+        @current-change="handleCurrentChange"
+        :page-size="meta.per_page"
+      />
+    </div>
 
-          <el-form-item label="Nombre/Descripción de la Base" prop="nombre_descripcion">
-            <el-input ref="nombre_descripcionField" v-model="modelBase.nombre_descripcion" type="text" autocomplete="off"
-                      placeholder="Nombre o descripción de la base" />
-          </el-form-item>
+    <!-- Diálogo responsivo -->
+    <el-dialog
+      v-model="visibleDialogForm"
+      :close-on-click-modal="false"
+      top="5vh"
+      :width="dialogWidth"
+      :fullscreen="isMobile"
+      :title="titleDialogForm"
+    >
+      <el-form ref="formCreateEditBase" v-loading="loadingSaveDialogForm" :model="modelBase" :rules="reglasValidacion" status-icon label-position="top">
+        <el-row :gutter="16">
+          <el-col :xs="24" :sm="24" :md="24">
+            <el-form-item label="Nombre/Descripción de la Base" prop="nombre_descripcion">
+              <el-input ref="nombre_descripcionField" v-model="modelBase.nombre_descripcion" type="text" autocomplete="off" placeholder="Nombre o descripción de la base" />
+            </el-form-item>
+          </el-col>
 
-          <el-form-item label="N° Partida Registral (8 dígitos)" prop="numero_partida_registral">
-            <el-input
-              v-model="modelBase.numero_partida_registral"
-              placeholder="00000000"
-              maxlength="8"
-              @input="modelBase.numero_partida_registral = modelBase.numero_partida_registral.replace(/\D/g, '')"
-            />
-            <small class="text-muted">Opcional - 8 dígitos numéricos</small>
-          </el-form-item>
+          <el-col :xs="24" :sm="24" :md="24">
+            <el-form-item label="N° Partida Registral (8 dígitos)" prop="numero_partida_registral">
+              <el-input v-model="modelBase.numero_partida_registral" placeholder="00000000" maxlength="8" @input="modelBase.numero_partida_registral = modelBase.numero_partida_registral.replace(/\D/g, '')" />
+              <small class="text-muted">Opcional - 8 dígitos numéricos</small>
+            </el-form-item>
+          </el-col>
 
-          <el-form-item label="Región" prop="region_id">
-            <el-select
-              ref="region_idField"
-              v-model="modelBase.region_id"
-              placeholder="Seleccione Región"
-              style="width: 100%"
-              @change="fetchProvinciasByRegion"
-              filterable
-            >
-              <el-option
-                v-for="item in optionsRegiones"
-                :key="item.id"
-                :label="item.descripcion"
-                :value="item.id"
-              />
-            </el-select>
-          </el-form-item>
+          <el-col :xs="24" :sm="12" :md="12">
+            <el-form-item label="Región" prop="region_id">
+              <el-select v-model="modelBase.region_id" placeholder="Seleccione Región" style="width: 100%" @change="fetchProvinciasByRegion" filterable>
+                <el-option v-for="item in optionsRegiones" :key="item.id" :label="item.descripcion" :value="item.id" />
+              </el-select>
+            </el-form-item>
+          </el-col>
 
-          <el-form-item label="Provincia" prop="provincia_id">
-            <el-select
-              ref="provincia_idField"
-              v-model="modelBase.provincia_id"
-              placeholder="Seleccione Provincia"
-              style="width: 100%"
-              :disabled="!modelBase.region_id"
-              @change="fetchDistritosByProvincia"
-              filterable
-            >
-              <el-option
-                v-for="item in optionsProvincias"
-                :key="item.id"
-                :label="item.descripcion"
-                :value="item.id"
-              />
-            </el-select>
-          </el-form-item>
+          <el-col :xs="24" :sm="12" :md="12">
+            <el-form-item label="Provincia" prop="provincia_id">
+              <el-select v-model="modelBase.provincia_id" placeholder="Seleccione Provincia" style="width: 100%" :disabled="!modelBase.region_id" @change="fetchDistritosByProvincia" filterable>
+                <el-option v-for="item in optionsProvincias" :key="item.id" :label="item.descripcion" :value="item.id" />
+              </el-select>
+            </el-form-item>
+          </el-col>
 
-          <el-form-item label="Distrito" prop="distrito_id">
-            <el-select
-              ref="distrito_idField"
-              v-model="modelBase.distrito_id"
-              placeholder="Seleccione Distrito"
-              style="width: 100%"
-              :disabled="!modelBase.provincia_id"
-              @change="fetchSectoresByDistrito"
-              filterable
-            >
-              <el-option
-                v-for="item in optionsDistritos"
-                :key="item.id"
-                :label="item.descripcion"
-                :value="item.id"
-              />
-            </el-select>
-          </el-form-item>
+          <el-col :xs="24" :sm="12" :md="12">
+            <el-form-item label="Distrito" prop="distrito_id">
+              <el-select v-model="modelBase.distrito_id" placeholder="Seleccione Distrito" style="width: 100%" :disabled="!modelBase.provincia_id" @change="fetchSectoresByDistrito" filterable>
+                <el-option v-for="item in optionsDistritos" :key="item.id" :label="item.descripcion" :value="item.id" />
+              </el-select>
+            </el-form-item>
+          </el-col>
 
-          <el-form-item label="Sector (Opcional)" prop="sector_zona_id">
-            <el-select
-              ref="sector_zona_idField"
-              v-model="modelBase.sector_zona_id"
-              placeholder="Seleccione Sector (Opcional)"
-              style="width: 100%"
-              :disabled="!modelBase.distrito_id"
-              filterable
-            >
-              <el-option
-                v-for="item in optionsSectors"
-                :key="item.id"
-                :label="item.descripcion"
-                :value="item.id"
-              />
-              <el-option
-                :label="'Sin Sector (directamente en distrito)'"
-                :value="null"
-              />
-            </el-select>
-            <small class="text-muted">La base puede estar directamente en un distrito o en un sector específico</small>
-          </el-form-item>
+          <el-col :xs="24" :sm="12" :md="12">
+            <el-form-item label="Sector (Opcional)" prop="sector_zona_id">
+              <el-select v-model="modelBase.sector_zona_id" placeholder="Seleccione Sector (Opcional)" style="width: 100%" :disabled="!modelBase.distrito_id" filterable clearable>
+                <el-option v-for="item in optionsSectors" :key="item.id" :label="item.descripcion" :value="item.id" />
+                <el-option label="Sin Sector (directamente en distrito)" :value="null" />
+              </el-select>
+              <small class="text-muted">La base puede estar directamente en un distrito o en un sector específico</small>
+            </el-form-item>
+          </el-col>
 
-          <el-form-item label="Administrador (Opcional)" prop="admin_id">
-            <el-select v-model="modelBase.admin_id" placeholder="Seleccione administrador" style="width: 100%" filterable clearable>
-              <el-option
-                v-for="item in detalleRonderos"
-                :key="item.rondero_id"
-                :label="item.nombres + ' ' + item.apellido_paterno + ' ' + item.apellido_materno"
-                :value="item.persona_id"
-              />
-            </el-select>
-          </el-form-item>
-        </el-form>
-      </div>
+          <el-col :xs="24" :sm="24" :md="24">
+            <el-form-item label="Administrador (Opcional)" prop="admin_id">
+              <el-select v-model="modelBase.admin_id" placeholder="Seleccione administrador" style="width: 100%" filterable clearable>
+                <el-option v-for="item in detalleRonderos" :key="item.rondero_id" :label="`${item.nombres} ${item.apellido_paterno} ${item.apellido_materno}`.trim()" :value="item.persona_id" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="saveFormCreateEdit">
-            Guardar
-          </el-button>
+          <el-button type="primary" @click="saveFormCreateEdit">Guardar</el-button>
           <el-button type="danger" @click="resetFormCreateEdit">Resetear</el-button>
           <el-button @click="visibleDialogForm = false">Cancelar</el-button>
         </div>
@@ -225,50 +190,151 @@
 </template>
 
 <style scoped>
+.bases-view-container {
+  padding: 16px;
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.header-section h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.filter-container {
+  flex-shrink: 0;
+}
+
+.search-input {
+  width: 280px;
+}
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.responsive-table {
+  width: 100%;
+  min-width: 800px;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 .paging {
   display: flex;
   justify-content: center;
-  align-items: center;
-  flex-wrap: nowrap;
-  flex-direction: row;
-  align-content: flex-start;
   padding-top: 20px;
 }
+
 .text-muted {
   color: #666;
   font-size: 12px;
   display: block;
   margin-top: 4px;
 }
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+  .bases-view-container {
+    padding: 12px;
+  }
+
+  .header-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-section h3 {
+    text-align: center;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .filter-container {
+    width: 100%;
+  }
+
+  .action-buttons {
+    gap: 4px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .bases-view-container {
+    padding: 8px;
+  }
+
+  .header-section h3 {
+    font-size: 16px;
+  }
+
+  .dialog-footer {
+    justify-content: center;
+  }
+
+  .dialog-footer .el-button {
+    flex: 1;
+  }
+}
 </style>
 
 <script>
-import {ref, reactive, onMounted, nextTick, markRaw} from 'vue';
+import { ref, reactive, onMounted, nextTick, markRaw, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import {Search, Plus, Edit, Delete, ArrowDown, Check, Close, List} from '@element-plus/icons-vue';
+import { Search, Plus, Edit, Check, Close } from '@element-plus/icons-vue';
 import { useAuthStore } from "@/stores/AuthStore";
 import BaseResource from '@/api/publico/base';
 import RegionResource from '@/api/publico/region';
 import ProvinciaResource from '@/api/publico/provincia';
 import DistritoResource from '@/api/publico/distrito';
 import SectorResource from "@/api/publico/sector";
-import {isActionDisabled} from "@/utils/utils.js";
-import axios from 'axios'; // 🔥 IMPORTANTE: Agregar axios
+import { isActionDisabled } from "@/utils/utils.js";
+import axios from 'axios';
 
 export default {
   name: 'BasesView',
-  components: {Edit, Close, Check, ArrowDown, List},
-  methods: {isActionDisabled},
+  components: { Edit, Close, Check },
+  methods: { isActionDisabled },
   setup() {
     const regionResource = new RegionResource();
     const provinciaResource = new ProvinciaResource();
     const distritoResource = new DistritoResource();
     const sectorResource = new SectorResource();
     const baseResource = new BaseResource();
-    const authStore = useAuthStore()
-    const detalleRonderos = ref([])
+    const authStore = useAuthStore();
+    const detalleRonderos = ref([]);
     const formCreateEditBase = ref(null);
     const nombre_descripcionField = ref(null);
+
+    // Detectar si es móvil
+    const isMobile = ref(window.innerWidth <= 768);
+    const dialogWidth = computed(() => isMobile.value ? '95%' : '650px');
+
+    window.addEventListener('resize', () => {
+      isMobile.value = window.innerWidth <= 768;
+    });
 
     const modelBase = reactive({
       id: undefined,
@@ -286,84 +352,52 @@ export default {
         { required: true, message: 'El campo es requerido', trigger: 'blur' },
         { min: 3, message: 'Mínimo 3 caracteres', trigger: 'blur' }
       ],
-      numero_partida_registral: [
-        {
-          pattern: /^[0-9]{0,8}$/,
-          message: 'Máximo 8 dígitos numéricos',
-          trigger: 'blur'
-        }
-      ],
-      region_id: [
-        { required: true, message: 'La región es requerida', trigger: 'change' }
-      ],
-      provincia_id: [
-        { required: true, message: 'La provincia es requerida', trigger: 'change' }
-      ],
-      distrito_id: [
-        { required: true, message: 'El distrito es requerido', trigger: 'change' }
-      ],
+      numero_partida_registral: [{ pattern: /^[0-9]{0,8}$/, message: 'Máximo 8 dígitos numéricos', trigger: 'blur' }],
+      region_id: [{ required: true, message: 'La región es requerida', trigger: 'change' }],
+      provincia_id: [{ required: true, message: 'La provincia es requerida', trigger: 'change' }],
+      distrito_id: [{ required: true, message: 'El distrito es requerido', trigger: 'change' }],
     };
 
     const tableData = ref([]);
     const meta = ref({});
     const listLoading = ref(true);
-
-    const listQuery = reactive({
-      page: 1,
-      limit: 10,
-      keyword: ''
-    });
-
+    const listQuery = reactive({ page: 1, limit: 10, keyword: '' });
     const visibleDialogForm = ref(false);
     const titleDialogForm = ref('');
     const loadingSaveDialogForm = ref(false);
-
     const optionsRegiones = ref([]);
     const optionsProvincias = ref([]);
     const optionsDistritos = ref([]);
     const optionsSectors = ref([]);
 
+    const formatNombre = (nombres, paterno, materno) => {
+      const nombreCompleto = `${nombres || ''} ${paterno || ''} ${materno || ''}`.trim();
+      return nombreCompleto.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    };
 
-  const fetchAllRonderos = async () => {
-    console.log('🚀🚀🚀 fetchAllRonderos INICIADO');
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
-      const url = `${apiUrl}/publico/ronderos/potenciales-administradores`;
-      console.log('📡 URL:', url);
-      
-      const response = await axios.get(url);
-      console.log('✅ Status:', response.status);
-      console.log('✅ Data completa:', response.data);
-      
-      const data = response.data.data || response.data;
-      console.log('📊 data extraída:', data);openFormEditar 
-      console.log('📊 data es array?', Array.isArray(data));
-      console.log('📊 Cantidad:', data ? data.length : 0);
-      
-      if (data && Array.isArray(data) && data.length > 0) {
-        detalleRonderos.value = data.map(item => ({
-          id: item.id,
-          rondero_id: item.id,
-          persona_id: item.persona?.id,
-          docIdentidad: item.persona?.docIdentidad || '',
-          apellido_paterno: item.persona?.apellido_paterno || '',
-          apellido_materno: item.persona?.apellido_materno || '',
-          nombres: item.persona?.nombres || '',
-        }));
-        console.log('✅ detalleRonderos actualizado, cantidad:', detalleRonderos.value.length);
-        console.log('📋 Primer rondero:', detalleRonderos.value[0]);
-      } else {
-        console.log('⚠️ No hay datos');
+    const fetchAllRonderos = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+        const response = await axios.get(`${apiUrl}/publico/ronderos/potenciales-administradores`);
+        const data = response.data.data || response.data;
+        if (data && Array.isArray(data) && data.length > 0) {
+          detalleRonderos.value = data.map(item => ({
+            id: item.id,
+            rondero_id: item.id,
+            persona_id: item.persona?.id,
+            docIdentidad: item.persona?.docIdentidad || '',
+            apellido_paterno: item.persona?.apellido_paterno || '',
+            apellido_materno: item.persona?.apellido_materno || '',
+            nombres: item.persona?.nombres || '',
+          }));
+        } else {
+          detalleRonderos.value = [];
+        }
+      } catch (error) {
+        console.error('Error fetching ronderos:', error);
         detalleRonderos.value = [];
       }
-    } catch (error) {
-      console.error('❌ Error en fetchAllRonderos:', error.message);
-      console.error('❌ Status:', error.response?.status);
-      console.error('❌ Data:', error.response?.data);
-      detalleRonderos.value = [];
-    }
-    console.log('🏁 fetchAllRonderos FINALIZADO - detalleRonderos tiene:', detalleRonderos.value.length);
-  };
+    };
 
     const openFormCreate = async () => {
       resetModelBase();
@@ -378,20 +412,12 @@ export default {
     };
 
     const openFormEditar = async (id) => {
-      console.log('✏️ openFormEditar - Editando base ID:', id);
       titleDialogForm.value = 'Editar Base';
       visibleDialogForm.value = true;
       loadingSaveDialogForm.value = true;
-
       try {
         const { data } = await baseResource.get(id);
-        console.log('📋 Datos recibidos de la base:', data);
-
-        // Cargar regiones primero
         await fetchRegiones();
-        console.log('✅ Regiones cargadas');
-
-        // Asignar valores básicos
         Object.assign(modelBase, {
           id: data.id,
           nombre_descripcion: data.nombre_descripcion || data.nombre || data.descripcion,
@@ -402,41 +428,24 @@ export default {
           sector_zona_id: data.sector_zona_id || (data.sector?.id) || null,
           admin_id: data.admin_id || null,
         });
-
-        console.log('📝 Modelo cargado:', modelBase);
-
-        // 🔥 Cargar provincias si hay región
         if (modelBase.region_id) {
           await fetchProvinciasByRegion(modelBase.region_id);
-          console.log('✅ Provincias cargadas para región:', modelBase.region_id);
-          
-          // Esperar a que el select de provincia tenga las opciones
           await nextTick();
-          
-          // 🔥 Cargar distritos si hay provincia
           if (modelBase.provincia_id) {
             await fetchDistritosByProvincia(modelBase.provincia_id);
-            console.log('✅ Distritos cargados para provincia:', modelBase.provincia_id);
-            
             await nextTick();
-            
-            // 🔥 Cargar sectores si hay distrito
             if (modelBase.distrito_id) {
               await fetchSectoresByDistrito(modelBase.distrito_id);
-              console.log('✅ Sectores cargados para distrito:', modelBase.distrito_id);
             }
           }
         }
-
-        // Cargar ronderos para el selector de administrador
         await fetchAllRonderos();
-
         nextTick(() => {
           formCreateEditBase.value?.clearValidate();
           nombre_descripcionField.value?.focus();
         });
       } catch (error) {
-        console.error('❌ Error al cargar datos:', error);
+        console.error('Error al cargar datos:', error);
         visibleDialogForm.value = false;
         ElMessage.error('Error al obtener datos de la base');
       } finally {
@@ -462,36 +471,14 @@ export default {
 
     const saveFormCreateEdit = () => {
       formCreateEditBase.value?.validate((valid) => {
-        console.log('✅ Validación del formulario:', valid);
-        console.log('📝 Datos del modelo:', JSON.parse(JSON.stringify(modelBase)));
-
         if (valid) {
-          if (!modelBase.region_id) {
-            ElMessage.error('Debe seleccionar una región');
+          if (!modelBase.region_id || !modelBase.provincia_id || !modelBase.distrito_id) {
+            ElMessage.error('Debe seleccionar región, provincia y distrito');
             return;
           }
-          if (!modelBase.provincia_id) {
-            ElMessage.error('Debe seleccionar una provincia');
-            return;
-          }
-          if (!modelBase.distrito_id) {
-            ElMessage.error('Debe seleccionar un distrito');
-            return;
-          }
-
-          console.log('🚀 Enviando datos con:', {
-            region_id: modelBase.region_id,
-            provincia_id: modelBase.provincia_id,
-            distrito_id: modelBase.distrito_id
-          });
-
-          if (modelBase.id === undefined) {
-            saveDataForm();
-          } else {
-            saveEditDataForm();
-          }
+          if (modelBase.id === undefined) saveDataForm();
+          else saveEditDataForm();
         } else {
-          console.log('Formulario no válido');
           ElMessage.warning('Por favor complete todos los campos requeridos');
         }
       });
@@ -499,7 +486,6 @@ export default {
 
     const saveDataForm = () => {
       loadingSaveDialogForm.value = true;
-
       const datosEnviar = {
         nombre_descripcion: modelBase.nombre_descripcion.trim(),
         numero_partida_registral: modelBase.numero_partida_registral || null,
@@ -509,85 +495,22 @@ export default {
         sector_zona_id: modelBase.sector_zona_id,
         admin_id: modelBase.admin_id,
       };
-
-      console.log('📤 Enviando datos al backend:', datosEnviar);
-
       baseResource.store(datosEnviar)
-        .then(response => {
-          console.log('✅ Respuesta del servidor:', response);
-
-          if (response && (response.state === 'success' || response.data)) {
-            ElMessage.success(response.message || 'Base registrada correctamente');
-            resetModelBase();
-            visibleDialogForm.value = false;
-            fetchBases();
-          } else {
-            throw new Error('Respuesta inesperada del servidor');
-          }
+        .then(() => {
+          ElMessage.success('Base registrada correctamente');
+          resetModelBase();
+          visibleDialogForm.value = false;
+          fetchBases();
         })
         .catch(error => {
-          console.error('❌ ERROR EN LA SOLICITUD:', error);
-
-          if (error.response) {
-            const status = error.response.status;
-            const data = error.response.data;
-
-            if (status === 422 && data.errors) {
-              let mensajesError = [];
-
-              Object.keys(data.errors).forEach(key => {
-                if (Array.isArray(data.errors[key])) {
-                  data.errors[key].forEach(msg => {
-                    mensajesError.push(`${key}: ${msg}`);
-                  });
-                } else {
-                  mensajesError.push(`${key}: ${data.errors[key]}`);
-                }
-              });
-
-              mensajesError.forEach(msg => {
-                ElMessage.error(msg);
-              });
-            }
-            else if (status === 500) {
-              ElMessage.error('Error interno del servidor. Contacte al administrador.');
-              console.error('Error 500 detalle:', data);
-            }
-            else if (status === 401 || status === 403) {
-              ElMessage.error('No autorizado. Por favor, inicie sesión nuevamente.');
-              authStore.logout();
-              setTimeout(() => {
-                window.location.href = '/login';
-              }, 2000);
-            }
-            else if (data.message) {
-              ElMessage.error(data.message);
-            } else {
-              ElMessage.error(`Error ${status}: ${data || 'Error desconocido'}`);
-            }
-
-          } else if (error.request) {
-            console.error('No se recibió respuesta del servidor:', error.request);
-
-            if (error.request.status === 0) {
-              ElMessage.error('Error de conexión. Verifique: \n1. El servidor está corriendo\n2. No hay problemas de CORS\n3. La URL es correcta');
-            } else {
-              ElMessage.error('El servidor no respondió. Verifique su conexión.');
-            }
-
-          } else {
-            console.error('Error de configuración:', error.message);
-            ElMessage.error(`Error: ${error.message}`);
-          }
+          console.error(error);
+          ElMessage.error(error.response?.data?.message || 'Error al registrar');
         })
-        .finally(() => {
-          loadingSaveDialogForm.value = false;
-        });
+        .finally(() => { loadingSaveDialogForm.value = false; });
     };
 
     const saveEditDataForm = () => {
       loadingSaveDialogForm.value = true;
-
       const datosEnviar = {
         nombre_descripcion: modelBase.nombre_descripcion.trim(),
         numero_partida_registral: modelBase.numero_partida_registral || null,
@@ -597,110 +520,55 @@ export default {
         sector_zona_id: modelBase.sector_zona_id,
         admin_id: modelBase.admin_id,
       };
-
-      console.log('📤 Actualizando datos:', datosEnviar);
-
       baseResource.update(modelBase.id, datosEnviar)
-        .then(response => {
-          console.log('✅ Actualización exitosa:', response);
-
-          if (response && (response.state === 'success' || response.data)) {
-            ElMessage.success(response.message || 'Base actualizada correctamente');
-            resetModelBase();
-            visibleDialogForm.value = false;
-            fetchBases();
-          } else {
-            throw new Error('Respuesta inesperada del servidor');
-          }
+        .then(() => {
+          ElMessage.success('Base actualizada correctamente');
+          resetModelBase();
+          visibleDialogForm.value = false;
+          fetchBases();
         })
         .catch(error => {
-          console.error('❌ Error al actualizar:', error);
-
-          if (error.response) {
-            const data = error.response.data;
-            if (error.response.status === 422 && data.errors) {
-              Object.keys(data.errors).forEach(key => {
-                if (Array.isArray(data.errors[key])) {
-                  data.errors[key].forEach(msg => ElMessage.error(`${key}: ${msg}`));
-                }
-              });
-            } else if (data.message) {
-              ElMessage.error(data.message);
-            } else {
-              ElMessage.error('Error al actualizar los datos');
-            }
-          } else {
-            ElMessage.error('Error de conexión con el servidor');
-          }
+          console.error(error);
+          ElMessage.error(error.response?.data?.message || 'Error al actualizar');
         })
-        .finally(() => {
-          loadingSaveDialogForm.value = false;
-        });
+        .finally(() => { loadingSaveDialogForm.value = false; });
     };
 
     const accionDesactivarRegistro = (id, nombre) => {
-      ElMessageBox.confirm(
-        `¿Seguro que desea Desactivar la base <em>${nombre}</em>?`,
-        'Atención',
-        {
-          top: '5vh',
-          icon: markRaw(Delete),
-          confirmButtonText: 'Si, desactivar',
-          cancelButtonText: 'Cancelar',
-          type: 'warning',
-          dangerouslyUseHTMLString: true
-        }
-      )
-        .then(() => {
-          baseResource.inactivar(id)
-            .then(() => {
-              ElMessage.success('Base desactivada');
-              fetchBases();
-            })
-            .catch((error) => {
-              console.error('Error desactivating data:', error);
-              ElMessage.error('Se ha producido un error al desactivar');
-            });
-        })
-        .catch(() => {
-          ElMessage.info('Operación cancelada');
-        });
+      ElMessageBox.confirm(`¿Seguro que desea Desactivar la base <em>${nombre}</em>?`, 'Atención', {
+        top: '5vh',
+        icon: markRaw(Close),
+        confirmButtonText: 'Si, desactivar',
+        cancelButtonText: 'Cancelar',
+        type: 'warning',
+        dangerouslyUseHTMLString: true
+      }).then(() => {
+        baseResource.inactivar(id).then(() => {
+          ElMessage.success('Base desactivada');
+          fetchBases();
+        }).catch(() => ElMessage.error('Error al desactivar'));
+      }).catch(() => ElMessage.info('Operación cancelada'));
     };
 
     const accionActivarRegistro = (id, nombre) => {
-      ElMessageBox.confirm(
-        `¿Seguro que desea Activar la base <em>${nombre}</em>?`,
-        'Atención',
-        {
-          top: '5vh',
-          icon: markRaw(Check),
-          confirmButtonText: 'Si, activar',
-          cancelButtonText: 'Cancelar',
-          type: 'warning',
-          dangerouslyUseHTMLString: true
-        }
-      )
-        .then(() => {
-          baseResource.activar(id)
-            .then(() => {
-              ElMessage.success('Base activada');
-              fetchBases();
-            })
-            .catch((error) => {
-              console.error('Error activating data:', error);
-              ElMessage.error('Se ha producido un error al activar');
-            });
-        })
-        .catch(() => {
-          ElMessage.info('Operación cancelada');
-        });
+      ElMessageBox.confirm(`¿Seguro que desea Activar la base <em>${nombre}</em>?`, 'Atención', {
+        top: '5vh',
+        icon: markRaw(Check),
+        confirmButtonText: 'Si, activar',
+        cancelButtonText: 'Cancelar',
+        type: 'warning',
+        dangerouslyUseHTMLString: true
+      }).then(() => {
+        baseResource.activar(id).then(() => {
+          ElMessage.success('Base activada');
+          fetchBases();
+        }).catch(() => ElMessage.error('Error al activar'));
+      }).catch(() => ElMessage.info('Operación cancelada'));
     };
 
     const resetFormCreateEdit = () => {
       formCreateEditBase.value?.resetFields();
-      nextTick(() => {
-        nombre_descripcionField.value?.focus();
-      });
+      nextTick(() => nombre_descripcionField.value?.focus());
     };
 
     const handleBuscarDatos = () => {
@@ -713,122 +581,49 @@ export default {
       fetchBases();
     };
 
-    const keywordByBase = reactive({
-      keyword: '',
-      limit: 1000,
-      page: 1,
-      orderby: 'ASC',
-      ids_excluir: [],
-      base_id: 0,
-    });
-
-    const getRonderos = async (id) => {
-      console.log('getRonderos llamado para base ID:', id);
-    }
-
     const fetchBases = () => {
       listLoading.value = true;
       baseResource.list(listQuery)
         .then(response => {
           tableData.value = response.data;
           meta.value = response.meta;
-          console.log('📊 Bases cargadas:', response.data.length);
-
-          if (response.data.length > 0) {
-            console.log('🔍 Estructura de la primera base:', response.data[0]);
-          }
         })
-        .catch(error => {
-          console.error('Error fetching data:', error);
-          ElMessage.error('Error al obtener bases');
-        })
-        .finally(() => {
-          listLoading.value = false;
-        });
+        .catch(error => console.error('Error fetching data:', error))
+        .finally(() => { listLoading.value = false; });
     };
 
     const fetchRegiones = async () => {
       try {
-        await regionResource.list()
-          .then(response => {
-            const { data } = response
-            optionsRegiones.value = data;
-            console.log('📊 Regiones cargadas:', data.length);
-          })
-          .catch(error => {
-            console.error('Error fetching regiones:', error);
-            ElMessage.error('Error al obtener regiones');
-          });
+        const { data } = await regionResource.list();
+        optionsRegiones.value = data;
       } catch (error) {
-        console.error('Error en fetchRegiones:', error);
+        console.error('Error fetching regiones:', error);
       }
     };
 
     const fetchProvinciasByRegion = async (regionId) => {
-      if (!regionId) {
-        optionsProvincias.value = [];
-        optionsDistritos.value = [];
-        optionsSectors.value = [];
-        return;
-      }
-
+      if (!regionId) { optionsProvincias.value = []; optionsDistritos.value = []; optionsSectors.value = []; return; }
       try {
-        await provinciaResource.getProvincias(regionId)
-          .then(response => {
-            optionsProvincias.value = response.data || response;
-            console.log('📊 Provincias cargadas:', optionsProvincias.value.length);
-          })
-          .catch(error => {
-            console.error('Error fetching provincias:', error);
-            ElMessage.error('Error al obtener provincias');
-          });
-      } catch (error) {
-        console.error('Error en fetchProvinciasByRegion:', error);
-      }
+        const response = await provinciaResource.getProvincias(regionId);
+        optionsProvincias.value = response.data || response;
+      } catch (error) { console.error('Error fetching provincias:', error); }
     };
 
     const fetchDistritosByProvincia = async (provinciaId) => {
-      if (!provinciaId) {
-        optionsDistritos.value = [];
-        optionsSectors.value = [];
-        return;
-      }
-
+      if (!provinciaId) { optionsDistritos.value = []; optionsSectors.value = []; return; }
       try {
-        await distritoResource.getDistritos(provinciaId)
-          .then(response => {
-            optionsDistritos.value = response.data || response;
-            console.log('📊 Distritos cargados:', optionsDistritos.value.length);
-          })
-          .catch(error => {
-            console.error('Error fetching distritos:', error);
-            ElMessage.error('Error al obtener distritos');
-          });
-      } catch (error) {
-        console.error('Error en fetchDistritosByProvincia:', error);
-      }
+        const response = await distritoResource.getDistritos(provinciaId);
+        optionsDistritos.value = response.data || response;
+      } catch (error) { console.error('Error fetching distritos:', error); }
     };
 
     const fetchSectoresByDistrito = async (distritoId) => {
-      if (!distritoId) {
-        optionsSectors.value = [];
-        modelBase.sector_zona_id = null;
-        return;
-      }
-
+      if (!distritoId) { optionsSectors.value = []; modelBase.sector_zona_id = null; return; }
       try {
-        await sectorResource.getSectores(distritoId)
-          .then(response => {
-            optionsSectors.value = response.data || response;
-            console.log('📊 Sectores cargados para distrito', distritoId, ':', optionsSectors.value);
-            modelBase.sector_zona_id = null;
-          })
-          .catch(error => {
-            console.error('Error fetching sectores:', error);
-          });
-      } catch (error) {
-        console.error('Error en fetchSectoresByDistrito:', error);
-      }
+        const response = await sectorResource.getSectores(distritoId);
+        optionsSectors.value = response.data || response;
+        modelBase.sector_zona_id = null;
+      } catch (error) { console.error('Error fetching sectores:', error); }
     };
 
     onMounted(() => {
@@ -865,11 +660,12 @@ export default {
       fetchProvinciasByRegion,
       fetchDistritosByProvincia,
       fetchSectoresByDistrito,
-
+      formatNombre,
+      isMobile,
+      dialogWidth,
       Search,
       Plus,
       Edit,
-      Delete,
     };
   }
 };

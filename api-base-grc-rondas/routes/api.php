@@ -66,6 +66,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     Route::resource('publico/bases', App\Http\Controllers\Publico\BaseController::class);
     Route::get('publico/bases/ronderos', [App\Http\Controllers\Publico\BaseController::class, 'getRonderosByBase']);
+    Route::get('publico/distritos/{id}/getSectores', [App\Http\Controllers\Publico\DistritoController::class, 'getSectores']);
+    Route::get('publico/bases/distrito/{distrito_id}/bases', [App\Http\Controllers\Publico\BaseController::class, 'getBasesPorDistrito']);
+    Route::get('publico/sectores/{id}/bases', [App\Http\Controllers\Publico\BaseController::class, 'getBases']);
 
     // ==========================================
     // MANTENIMIENTO (Regiones, Provincias, Distritos, Sectores, Cargos, Conflictos, Turnos, Denuncias)

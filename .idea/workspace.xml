@@ -7,13 +7,8 @@
     <list default="true" id="ce372d22-c1d4-4e96-85fe-586e42545805" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Admin/ConfiguracionController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Admin/ConfiguracionController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/ProvinciaController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/ProvinciaController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/RonderoController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/RonderoController.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/routes/api.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/routes/api.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/configuracion/ReniecConfigView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/configuracion/ReniecConfigView.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/RonderosView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/RonderosView.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/components/CreateRondero.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/components/CreateRondero.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/web/VerificarIdentidad.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/web/VerificarIdentidad.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/bases/BasesView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/bases/BasesView.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -227,8 +222,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-PS-253.30387.85" />
-        <option value="bundled-php-predefined-a98d8de5180a-0e0d91225499-com.jetbrains.php.sharedIndexes-PS-253.30387.85" />
+        <option value="bundled-js-predefined-d6986cc7102b-e03c56caf84a-JavaScript-PS-252.23892.419" />
+        <option value="bundled-php-predefined-a98d8de5180a-c72577f2c82f-com.jetbrains.php.sharedIndexes-PS-252.23892.419" />
       </set>
     </attachedChunks>
   </component>
@@ -242,6 +237,7 @@
       <workItem from="1778016223804" duration="4391000" />
       <workItem from="1778260080479" duration="26416000" />
       <workItem from="1778779977837" duration="405000" />
+      <workItem from="1779209173690" duration="2642000" />
     </task>
     <servers />
   </component>
