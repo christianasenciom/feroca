@@ -7,57 +7,57 @@
           <el-form-item label="DNI" prop="docIdentidad">
             <el-input v-model="form_rondero.persona.docIdentidad" placeholder="DNI" maxlength="8" disabled/>
           </el-form-item>
-          
+
           <el-form-item label="Nombres" prop="nombres">
             <el-input v-model="form_rondero.persona.nombres" placeholder="Nombres" disabled/>
           </el-form-item>
-          
+
           <el-form-item label="Ap.Paterno" prop="apellido_paterno">
             <el-input v-model="form_rondero.persona.apellido_paterno" placeholder="Ap. Paterno" disabled/>
           </el-form-item>
-          
+
           <el-form-item label="Ap. Materno" prop="apellido_materno">
             <el-input v-model="form_rondero.persona.apellido_materno" placeholder="Ap. Materno" disabled/>
           </el-form-item>
-          
+
           <el-form-item label="Fecha Inicio" prop="fecha_inicio">
             <el-date-picker
-                style="width: 100%"
-                type="date"
-                format="DD/MM/YYYY"
-                value-format="YYYY-MM-DD"
-                v-model="form_rondero.fecha_inicio"
-                placeholder="Fecha Inicio"
+              style="width: 100%"
+              type="date"
+              format="DD/MM/YYYY"
+              value-format="YYYY-MM-DD"
+              v-model="form_rondero.fecha_inicio"
+              placeholder="Fecha Inicio"
             />
           </el-form-item>
-          
+
           <el-form-item label="Fecha Cese" prop="fecha_cese">
             <el-date-picker
-                style="width: 100%"
-                type="date"
-                format="DD/MM/YYYY"
-                value-format="YYYY-MM-DD"
-                v-model="form_rondero.fecha_cese"
-                placeholder="Fecha cese"
+              style="width: 100%"
+              type="date"
+              format="DD/MM/YYYY"
+              value-format="YYYY-MM-DD"
+              v-model="form_rondero.fecha_cese"
+              placeholder="Fecha cese"
             />
           </el-form-item>
-          
+
           <el-form-item label="Email" prop="email">
             <el-input v-model.trim="form_rondero.persona.email" placeholder="mail@example.com" />
           </el-form-item>
-          
+
           <el-form-item label="Fecha Nacimiento" prop="fecha_nacimiento">
             <el-date-picker
-                style="width: 100%"
-                type="date"
-                format="DD/MM/YYYY"
-                value-format="YYYY-MM-DD"
-                v-model="form_rondero.persona.fecha_nacimiento"
-                placeholder="Fecha Nacimiento"
-                disabled
+              style="width: 100%"
+              type="date"
+              format="DD/MM/YYYY"
+              value-format="YYYY-MM-DD"
+              v-model="form_rondero.persona.fecha_nacimiento"
+              placeholder="Fecha Nacimiento"
+              disabled
             />
           </el-form-item>
-          
+
           <el-row :gutter="12">
             <el-col :xs="24" :sm="12" :md="12">
               <el-form-item label="Género" prop="genero">
@@ -73,80 +73,79 @@
               </el-form-item>
             </el-col>
           </el-row>
-          
+
           <el-form-item label="Dirección" prop="direccion">
             <el-input v-model="form_rondero.persona.direccion" placeholder="Dirección" disabled/>
           </el-form-item>
         </el-col>
-        
+
         <el-col :xs="24" :sm="12" :md="12">
           <el-form-item label="Región" prop="region_id">
             <el-select v-model="form_rondero.region_id" placeholder="Región" style="width: 100%" @change="obtenerProvincias">
               <el-option label="- Seleccione Región -" value="0"/>
               <el-option
-                  v-for="item in optionsRegiones"
-                  :key="item.id"
-                  :label="item.descripcion"
-                  :value="item.id"
+                v-for="item in optionsRegiones"
+                :key="item.id"
+                :label="item.descripcion"
+                :value="item.id"
               />
             </el-select>
           </el-form-item>
-          
+
           <el-form-item label="Provincia" prop="provincia_id">
             <el-select v-model="form_rondero.provincia_id" placeholder="Provincia" style="width: 100%" @change="obtenerDistritos">
               <el-option
-                  v-for="item in optionsProvincias"
-                  :key="item.id"
-                  :label="item.descripcion"
-                  :value="item.id"
+                v-for="item in optionsProvincias"
+                :key="item.id"
+                :label="item.descripcion"
+                :value="item.id"
               />
             </el-select>
           </el-form-item>
-          
+
           <el-form-item label="Distrito" prop="distrito_id">
-            <el-select v-model="form_rondero.distrito_id" placeholder="Distrito" style="width: 100%" searchable @change="obtenerSectores">
+            <el-select v-model="form_rondero.distrito_id" placeholder="Distrito" style="width: 100%" searchable @change="onDistritoChange">
               <el-option
-                  v-for="item in optionsDistritos"
-                  :key="item.id"
-                  :label="item.descripcion"
-                  :value="item.id"
+                v-for="item in optionsDistritos"
+                :key="item.id"
+                :label="item.descripcion"
+                :value="item.id"
               />
             </el-select>
           </el-form-item>
-          
+
           <el-form-item label="Sector / Zona" prop="sector_zona_id">
-            <el-select v-model="form_rondero.sector_zona_id" placeholder="Sector" style="width: 100%" searchable @change="obtenerBases">
+            <el-select v-model="form_rondero.sector_zona_id" placeholder="Sector" style="width: 100%" searchable @change="onSectorChange">
               <el-option
-                  v-for="item in optionsSectores"
-                  :key="item.id"
-                  :label="item.descripcion"
-                  :value="item.id"
+                v-for="item in optionsSectores"
+                :key="item.id"
+                :label="item.descripcion"
+                :value="item.id"
               />
             </el-select>
           </el-form-item>
-          
+
           <el-form-item label="Base" prop="base_id">
             <el-select v-model="form_rondero.base_id" placeholder="Base" style="width: 100%" searchable>
               <el-option
-                  v-for="item in optionsBases"
-                  :key="item.id"
-                  :label="item.descripcion"
-                  :value="item.id"
+                v-for="item in optionsBases"
+                :key="item.id"
+                :label="item.descripcion || item.nombre_descripcion"
+                :value="item.id"
               />
             </el-select>
           </el-form-item>
-          
+
           <!-- Código Rondero - SOLO LECTURA -->
           <el-form-item label="Código Rondero" prop="codigo_rondero">
-            <el-input 
-              v-model="form_rondero.codigo_rondero" 
+            <el-input
+              v-model="form_rondero.codigo_rondero"
               placeholder="Código autogenerado"
               disabled
             />
             <small class="text-muted">Código único asignado automáticamente</small>
           </el-form-item>
-          
-          
+
           <el-form-item label="Cargos" v-if="tagsCargos && tagsCargos.length > 0">
             <el-table :data="tagsCargos" style="width: 100%" size="small">
               <el-table-column prop="fecha_inicio" label="Inicio" width="100" :formatter="dateFormatter" />
@@ -160,10 +159,10 @@
               <el-table-column fixed="right" align="right" min-width="10">
                 <template #default="scope">
                   <el-button
-                      link
-                      type="primary"
-                      size="small"
-                      @click.prevent="deleteRowCargo(scope.$index, scope.row.id)"
+                    link
+                    type="primary"
+                    size="small"
+                    @click.prevent="deleteRowCargo(scope.$index, scope.row.id)"
                   >
                     <el-icon color="red" size="18"><Delete /></el-icon>
                   </el-button>
@@ -171,24 +170,24 @@
               </el-table-column>
             </el-table>
           </el-form-item>
-          
+
           <el-form-item>
             <el-button type="primary" @click="openDialog(form_rondero.id)">Asignar Cargo</el-button>
           </el-form-item>
         </el-col>
       </el-row>
     </el-form>
-    
+
     <el-row :gutter="10" type="flex" justify="end" class="mt-3">
       <el-button @click="close('canceled')" v-if="!isActionDisabled('pub.rondero.actualizar')">CANCELAR</el-button>
       <el-button type="primary" @click="submitForm(editRonderoForm)" v-if="!isActionDisabled('pub.rondero.actualizar')">GUARDAR</el-button>
     </el-row>
   </CustomLoading>
-  
+
   <AsignarComiteDialog
-      v-if="dialogVisible"
-      :rondero-id="selectedRonderoId"
-      @close-dialog="close_dialog_cargo"
+    v-if="dialogVisible"
+    :rondero-id="selectedRonderoId"
+    @close-dialog="close_dialog_cargo"
   />
 </template>
 
@@ -203,8 +202,8 @@ import BaseResource from '@/api/publico/base';
 import {ElMessage, ElMessageBox, ElNotification} from 'element-plus'
 import ComiteResource from "@/api/publico/comite";
 import { reactive, ref, onMounted, watch } from 'vue'
-import { Delete, Picture, Camera, InfoFilled } from "@element-plus/icons-vue";
-import { dateFormatter, isActionDisabled, isNumber } from "@/utils/utils.js";
+import { Delete } from "@element-plus/icons-vue";
+import { dateFormatter, isActionDisabled } from "@/utils/utils.js";
 import CustomLoading from "@/components/loading/CustomLoading.vue";
 
 const comiteResource = new ComiteResource();
@@ -265,7 +264,13 @@ const form_rondero = reactive({
   distrito_id: '',
   sector_zona_id: '',
   base_id: '',
-  codigo_rondero: ''
+  codigo_rondero: '',
+  // Objetos completos que vienen de la API
+  region: null,
+  provincia: null,
+  distrito: null,
+  sector: null,
+  base: null
 })
 
 const openDialog = (id_rondero) => {
@@ -286,159 +291,215 @@ const deleteRowCargo = (index, id_comite) => {
     type: 'warning',
     dangerouslyUseHTMLString: true
   })
-  .then(() => {
-    comiteResource.destroy(id_comite).then(response => {
-      if (response && response.state === 'success') {
-        ElNotification({ type: 'success', title: 'Cargo eliminado', duration: 2000 })
-        tagsCargos.value.splice(index, 1)
-        getCargos();
-      }
+    .then(() => {
+      comiteResource.destroy(id_comite).then(response => {
+        if (response && response.state === 'success') {
+          ElNotification({ type: 'success', title: 'Cargo eliminado', duration: 2000 })
+          tagsCargos.value.splice(index, 1)
+          getCargos();
+        }
+      })
     })
-  })
-  .catch(() => {
-    ElMessage.info('Operación cancelada');
-  });
+    .catch(() => {
+      ElMessage.info('Operación cancelada');
+    });
 };
 
 const getCargos = async () => {
-  await comiteResource.getComiteablesByRondero(props.idRondero)
-    .then(response => {
-      const { data } = response
-      tagsCargos.value = data;
-    })
-    .catch(error => {
-      console.error('Error fetching data:', error);
-      ElMessage.error('Error al obtener datos');
-    });
+  try {
+    const response = await comiteResource.getComiteablesByRondero(props.idRondero);
+    const { data } = response;
+    tagsCargos.value = data || [];
+  } catch (error) {
+    tagsCargos.value = [];
+  }
 };
 
 const fetchRegiones = async () => {
-  await regionResource.list()
-    .then(response => {
-      const { data } = response
-      optionsRegiones.value = data;
-      if (form_rondero.region){
-        const region = optionsRegiones.value.find(region => region.id === form_rondero.region.id);
-        if (region) {
-          form_rondero.region_id = region.id;
-          obtenerProvincias(form_rondero.region_id);
-        }
+  try {
+    const response = await regionResource.list();
+    const { data } = response;
+    optionsRegiones.value = data || [];
+
+    // Si hay una región asignada, seleccionarla
+    if (form_rondero.region && form_rondero.region.id) {
+      const region = optionsRegiones.value.find(r => r.id === form_rondero.region.id);
+      if (region) {
+        form_rondero.region_id = region.id;
+        await obtenerProvincias(form_rondero.region_id);
       }
-    })
-    .catch(error => {
-      console.error('Error fetching data:', error);
-      ElMessage.error('Error al obtener datos');
-    });
+    }
+  } catch (error) {
+    optionsRegiones.value = [];
+  }
 };
 
 const obtenerProvincias = async (region_id) => {
+  // Resetear campos dependientes
   form_rondero.provincia_id = '';
   form_rondero.distrito_id = '';
   form_rondero.sector_zona_id = '';
   form_rondero.base_id = '';
-  await provinciaResource.getProvincias(region_id)
-    .then(response => {
-      optionsProvincias.value = response;
-      if (form_rondero.provincia){
-        const provincia = optionsProvincias.value.find(provincia => provincia.id === form_rondero.provincia.id);
-        if (provincia) {
-          form_rondero.provincia_id = provincia.id;
-          obtenerDistritos(form_rondero.provincia_id);
-        }
+  optionsDistritos.value = [];
+  optionsSectores.value = [];
+  optionsBases.value = [];
+
+  if (!region_id || region_id === '' || region_id === 0) {
+    optionsProvincias.value = [];
+    return;
+  }
+
+  try {
+    const response = await provinciaResource.getProvincias(region_id);
+    optionsProvincias.value = response || [];
+
+    // Si hay una provincia asignada, seleccionarla
+    if (form_rondero.provincia && form_rondero.provincia.id) {
+      const provincia = optionsProvincias.value.find(p => p.id === form_rondero.provincia.id);
+      if (provincia) {
+        form_rondero.provincia_id = provincia.id;
+        await obtenerDistritos(form_rondero.provincia_id);
       }
-    })
-    .catch(error => {
-      console.error('Error fetching data:', error);
-      ElMessage.error('Error al obtener datos');
-    });
+    }
+  } catch (error) {
+    optionsProvincias.value = [];
+  }
 };
 
 const obtenerDistritos = async (provincia_id) => {
+  // Resetear campos dependientes
   form_rondero.distrito_id = '';
   form_rondero.sector_zona_id = '';
   form_rondero.base_id = '';
-  await distritoResource.getDistritos(provincia_id)
-    .then(response => {
-      optionsDistritos.value = response;
-      if (form_rondero.distrito){
-        const distrito = optionsDistritos.value.find(distrito => distrito.id === form_rondero.distrito.id);
-        if (distrito) {
-          form_rondero.distrito_id = distrito.id;
-          obtenerSectores(form_rondero.distrito_id);
-        }
+  optionsSectores.value = [];
+  optionsBases.value = [];
+
+  if (!provincia_id || provincia_id === '' || provincia_id === 0) {
+    optionsDistritos.value = [];
+    return;
+  }
+
+  try {
+    const response = await distritoResource.getDistritos(provincia_id);
+    optionsDistritos.value = response || [];
+
+    // Si hay un distrito asignado, seleccionarlo
+    if (form_rondero.distrito && form_rondero.distrito.id) {
+      const distrito = optionsDistritos.value.find(d => d.id === form_rondero.distrito.id);
+      if (distrito) {
+        form_rondero.distrito_id = distrito.id;
+        await onDistritoChange();
       }
-    })
-    .catch(error => {
-      console.error('Error fetching data:', error);
-      ElMessage.error('Error al obtener datos');
-    });
+    }
+  } catch (error) {
+    optionsDistritos.value = [];
+  }
 };
 
-const obtenerSectores = async (distrito_id) => {
-  form_rondero.sector_zona_id = '';
+const cargarBasesPorDistrito = async () => {
   form_rondero.base_id = '';
-  await sectorResource.getSectores(distrito_id)
-    .then(response => {
-      optionsSectores.value = response;
-      if (form_rondero.sector){
-        const sector = optionsSectores.value.find(sector => sector.id === form_rondero.sector.id);
-        if (sector) {
-          form_rondero.sector_zona_id = sector.id;
-          obtenerBases(form_rondero.sector_zona_id);
-        }
-      }
-    })
-    .catch(error => {
-      console.error('Error fetching data:', error);
-      ElMessage.error('Error al obtener datos');
-    });
-};
+  optionsBases.value = [];
 
-const obtenerBases = async (sector_zona_id) => {
-  form_rondero.base_id = '';
-  await baseResource.getBases(sector_zona_id)
-    .then(response => {
-      optionsBases.value = response;
-      if (form_rondero.base){
-        const base = optionsBases.value.find(base => base.id === form_rondero.base.id);
+  if (form_rondero.distrito_id && form_rondero.distrito_id !== '' && form_rondero.distrito_id !== 0) {
+    try {
+      const response = await baseResource.getBasesPorDistrito(form_rondero.distrito_id);
+      optionsBases.value = response.data || response || [];
+
+      // Si hay una base asignada, seleccionarla
+      if (form_rondero.base && form_rondero.base.id) {
+        const base = optionsBases.value.find(b => b.id === form_rondero.base.id);
         if (base) {
           form_rondero.base_id = base.id;
         }
       }
-    })
-    .catch(error => {
-      console.error('Error fetching data:', error);
-      ElMessage.error('Error al obtener datos');
-    });
+    } catch (error) {
+      optionsBases.value = [];
+    }
+  }
+};
+
+const onDistritoChange = async () => {
+  form_rondero.sector_zona_id = '';
+  form_rondero.base_id = '';
+  optionsSectores.value = [];
+  optionsBases.value = [];
+
+  if (form_rondero.distrito_id && form_rondero.distrito_id !== '' && form_rondero.distrito_id !== 0) {
+    try {
+      const response = await sectorResource.getSectores(form_rondero.distrito_id);
+      optionsSectores.value = response || [];
+
+      // Si hay un sector asignado, seleccionarlo
+      if (form_rondero.sector && form_rondero.sector.id) {
+        const sector = optionsSectores.value.find(s => s.id === form_rondero.sector.id);
+        if (sector) {
+          form_rondero.sector_zona_id = sector.id;
+        }
+      }
+    } catch (error) {
+      optionsSectores.value = [];
+    }
+
+    await cargarBasesPorDistrito();
+  }
+};
+
+const onSectorChange = async () => {
+  form_rondero.base_id = '';
+  optionsBases.value = [];
+
+  if (form_rondero.sector_zona_id && form_rondero.sector_zona_id !== '' && form_rondero.sector_zona_id !== 0) {
+    try {
+      const response = await baseResource.getBases(form_rondero.sector_zona_id);
+      optionsBases.value = response.data || response || [];
+
+      // Si hay una base asignada, seleccionarla
+      if (form_rondero.base && form_rondero.base.id) {
+        const base = optionsBases.value.find(b => b.id === form_rondero.base.id);
+        if (base) {
+          form_rondero.base_id = base.id;
+        }
+      }
+    } catch (error) {
+      optionsBases.value = [];
+    }
+  } else if (form_rondero.distrito_id && form_rondero.distrito_id !== '' && form_rondero.distrito_id !== 0) {
+    await cargarBasesPorDistrito();
+  } else {
+    optionsBases.value = [];
+  }
 };
 
 const cargarRegistro = async () => {
-  resetForm()
-  loading.value = true
-  await ronderoRequest.get(props.idRondero)
-    .then((response) => {
-      const { data } = response
-      Object.assign(form_rondero, data)
-      
-      if (data.persona && data.persona.id) {
-        form_rondero.persona.id = data.persona.id
-        form_rondero.id = data.id
-      }
-      
-      loading.value = false
-      fetchRegiones()
-      getCargos()
-    })
-    .catch((error) => {
-      console.log(error)
-      loading.value = true
-      ElNotification({ type: 'error', title: 'Error al recuperar el registro', duration: 2000 })
-      close('canceled')
-    })
+  resetForm();
+  loading.value = true;
+
+  try {
+    const response = await ronderoRequest.get(props.idRondero);
+    const { data } = response;
+
+    // Asignar todos los datos del rondero
+    Object.assign(form_rondero, data);
+
+    if (data.persona && data.persona.id) {
+      form_rondero.persona.id = data.persona.id;
+      form_rondero.id = data.id;
+    }
+
+    // Cargar regiones y luego el resto de ubicaciones
+    await fetchRegiones();
+    await getCargos();
+
+  } catch (error) {
+    ElNotification({ type: 'error', title: 'Error al recuperar el registro', duration: 2000 });
+    close('canceled');
+  } finally {
+    loading.value = false;
+  }
 };
 
 onMounted(() => {
-  cargarRegistro()
+  cargarRegistro();
 });
 
 const rules = reactive({
@@ -446,12 +507,19 @@ const rules = reactive({
   'persona.apellido_materno': [{ required: true, message: 'Campo requerido', trigger: 'blur' }],
   'persona.nombres': [{ required: true, message: 'Campo requerido', trigger: 'blur' }],
   'persona.docIdentidad': [{ required: true, message: 'Campo requerido', trigger: 'blur' }],
+  'persona.email': [
+    {
+      type: 'email',
+      message: 'Ingrese un email válido',
+      trigger: 'blur'
+    }
+  ],
 });
 
 const submitForm = async (formEl) => {
   if (!formEl) return;
   loading.value = true;
-  
+
   await formEl.validate(async (valid) => {
     if (valid) {
       try {
@@ -479,21 +547,19 @@ const submitForm = async (formEl) => {
             foto: form_rondero.persona.foto || null
           }
         };
-        
-        const response = await ronderoRequest.update(form_rondero.id, datosParaEnviar);
-        
+
+        await ronderoRequest.update(form_rondero.id, datosParaEnviar);
+
         ElNotification({
           type: 'success',
           title: 'Rondero actualizado',
-          message: response.message || 'Los cambios se guardaron correctamente',
+          message: 'Los cambios se guardaron correctamente',
           duration: 3000
         });
-        
+
         close('success');
-        
+
       } catch (error) {
-        console.error('❌ Error al actualizar:', error)
-        
         if (error.response) {
           if (error.response.status === 422 && error.response.data.errors) {
             const errors = error.response.data.errors;
@@ -543,8 +609,17 @@ const resetForm = () => {
     distrito_id: '',
     sector_zona_id: '',
     base_id: '',
-    codigo_rondero: ''
+    codigo_rondero: '',
+    region: null,
+    provincia: null,
+    distrito: null,
+    sector: null,
+    base: null
   });
+  optionsProvincias.value = [];
+  optionsDistritos.value = [];
+  optionsSectores.value = [];
+  optionsBases.value = [];
 };
 
 const close = (status) => {

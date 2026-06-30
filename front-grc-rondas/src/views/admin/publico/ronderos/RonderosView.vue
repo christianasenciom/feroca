@@ -5,10 +5,10 @@
       <!-- Filtro por nombre -->
       <el-col :xs="24" :sm="12" :md="6" class="actions-component">
         <el-input
-          v-model="query.keyword"
-          placeholder="Buscar por nombre"
-          @change="getLista"
-          clearable
+            v-model="query.keyword"
+            placeholder="Buscar por nombre"
+            @change="getLista"
+            clearable
         >
           <template #append>
             <el-button @click="getLista">
@@ -23,18 +23,18 @@
       <!-- Filtro por Región -->
       <el-col :xs="24" :sm="12" :md="4" class="actions-component">
         <el-select
-          v-model="query.region_id"
-          placeholder="Región"
-          clearable
-          filterable
-          @change="cargarProvincias"
-          style="width: 100%"
+            v-model="query.region_id"
+            placeholder="Región"
+            clearable
+            filterable
+            @change="cargarProvincias"
+            style="width: 100%"
         >
           <el-option
-            v-for="item in opcionesRegiones"
-            :key="item.id"
-            :label="item.descripcion"
-            :value="item.id"
+              v-for="item in opcionesRegiones"
+              :key="item.id"
+              :label="item.descripcion"
+              :value="item.id"
           />
         </el-select>
       </el-col>
@@ -42,19 +42,19 @@
       <!-- Filtro por Provincia -->
       <el-col :xs="24" :sm="12" :md="4" class="actions-component">
         <el-select
-          v-model="query.provincia_id"
-          placeholder="Provincia"
-          clearable
-          filterable
-          :disabled="!query.region_id"
-          @change="cargarDistritos"
-          style="width: 100%"
+            v-model="query.provincia_id"
+            placeholder="Provincia"
+            clearable
+            filterable
+            :disabled="!query.region_id"
+            @change="cargarDistritos"
+            style="width: 100%"
         >
           <el-option
-            v-for="item in opcionesProvincias"
-            :key="item.id"
-            :label="item.descripcion"
-            :value="item.id"
+              v-for="item in opcionesProvincias"
+              :key="item.id"
+              :label="item.descripcion"
+              :value="item.id"
           />
         </el-select>
       </el-col>
@@ -62,19 +62,19 @@
       <!-- Filtro por Distrito -->
       <el-col :xs="24" :sm="12" :md="4" class="actions-component">
         <el-select
-          v-model="query.distrito_id"
-          placeholder="Distrito"
-          clearable
-          filterable
-          :disabled="!query.provincia_id"
-          @change="cargarSectores"
-          style="width: 100%"
+            v-model="query.distrito_id"
+            placeholder="Distrito"
+            clearable
+            filterable
+            :disabled="!query.provincia_id"
+            @change="cargarSectores"
+            style="width: 100%"
         >
           <el-option
-            v-for="item in opcionesDistritos"
-            :key="item.id"
-            :label="item.descripcion"
-            :value="item.id"
+              v-for="item in opcionesDistritos"
+              :key="item.id"
+              :label="item.descripcion"
+              :value="item.id"
           />
         </el-select>
       </el-col>
@@ -82,19 +82,19 @@
       <!-- Filtro por Sector -->
       <el-col :xs="24" :sm="12" :md="3" class="actions-component">
         <el-select
-          v-model="query.sector_zona_id"
-          placeholder="Sector"
-          clearable
-          filterable
-          :disabled="!query.distrito_id"
-          @change="cargarBases"
-          style="width: 100%"
+            v-model="query.sector_zona_id"
+            placeholder="Sector"
+            clearable
+            filterable
+            :disabled="!query.distrito_id"
+            @change="cargarBases"
+            style="width: 100%"
         >
           <el-option
-            v-for="item in opcionesSectores"
-            :key="item.id"
-            :label="item.descripcion"
-            :value="item.id"
+              v-for="item in opcionesSectores"
+              :key="item.id"
+              :label="item.descripcion"
+              :value="item.id"
           />
         </el-select>
       </el-col>
@@ -102,19 +102,19 @@
       <!-- Filtro por Base -->
       <el-col :xs="24" :sm="12" :md="3" class="actions-component">
         <el-select
-          v-model="query.base_id_filtro"
-          placeholder="Base"
-          clearable
-          filterable
-          :disabled="!query.sector_zona_id"
-          @change="getLista"
-          style="width: 100%"
+            v-model="query.base_id_filtro"
+            placeholder="Base"
+            clearable
+            filterable
+            :disabled="!query.sector_zona_id"
+            @change="getLista"
+            style="width: 100%"
         >
           <el-option
-            v-for="item in opcionesBases"
-            :key="item.id"
-            :label="item.nombre_descripcion || item.descripcion"
-            :value="item.id"
+              v-for="item in opcionesBases"
+              :key="item.id"
+              :label="item.nombre_descripcion || item.descripcion"
+              :value="item.id"
           />
         </el-select>
       </el-col>
@@ -122,20 +122,25 @@
 
     <!-- Tabla de datos -->
     <el-table
-      :data="tableData"
-      :border="true"
-      style="width: 100%; margin-top: 15px !important; font-size: 12px;"
-      header-row-class-name="table-header-custom"
-      row-class-name="table-row-custom"
+        :data="tableData"
+        :border="true"
+        style="width: 100%; margin-top: 15px !important; font-size: 12px;"
+        header-row-class-name="table-header-custom"
+        row-class-name="table-row-custom"
     >
       <el-table-column type="index" label="#" width="40" fixed="left" />
       <el-table-column prop="codigo_rondero" label="Código Rondero" width="120" />
       <el-table-column prop="persona.docIdentidad" label="DNI" width="100" />
       <el-table-column prop="persona.nombre_completo" label="Persona" width="200" />
-      <el-table-column prop="persona.genero" label="Sexo" width="60">
+      <el-table-column prop="persona.genero" label="Sexo" width="60" align="center">
         <template #default="scope">
-          <el-tag v-if="scope.row.persona.genero === 'MASCULINO'">M</el-tag>
-          <el-tag v-else>F</el-tag>
+          <el-tag
+              :type="scope.row.persona.genero?.toUpperCase() === 'MASCULINO' ? 'primary' : 'danger'"
+              size="small"
+              effect="dark"
+          >
+            {{ obtenerInicialGenero(scope.row.persona.genero) }}
+          </el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="persona.celular" label="Celular" min-width="100" />
@@ -197,15 +202,15 @@
 
     <el-row type="flex" justify="center">
       <el-pagination
-        style="font-size: 12px;"
-        v-model:current-page="query.page"
-        v-model:page-size="query.limit"
-        :total="total"
-        :page-sizes="[10, 15, 25, 50]"
-        layout="total, sizes, prev, pager, next, jumper"
-        background
-        @size-change="getLista"
-        @current-change="getLista"
+          style="font-size: 12px;"
+          v-model:current-page="query.page"
+          v-model:page-size="query.limit"
+          :total="total"
+          :page-sizes="[10, 15, 25, 50]"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="getLista"
+          @current-change="getLista"
       />
     </el-row>
 
@@ -284,6 +289,32 @@ const query = reactive({
   sector_zona_id: null,
   base_id_filtro: null
 });
+
+// =============================================
+// FUNCIÓN PARA OBTENER LA INICIAL DEL GÉNERO
+// =============================================
+const obtenerInicialGenero = (genero) => {
+  if (!genero) return '-';
+
+  const generoNormalizado = genero.toUpperCase().trim();
+
+  // Verificar si es MASCULINO (acepta varias variantes)
+  if (generoNormalizado === 'MASCULINO' ||
+      generoNormalizado === 'M' ||
+      generoNormalizado.startsWith('MASC')) {
+    return 'M';
+  }
+
+  // Verificar si es FEMENINO (acepta varias variantes)
+  if (generoNormalizado === 'FEMENINO' ||
+      generoNormalizado === 'F' ||
+      generoNormalizado.startsWith('FEM')) {
+    return 'F';
+  }
+
+  // Si no se puede determinar, devolver el valor original o '-'
+  return genero.charAt(0).toUpperCase() || '-';
+};
 
 // Watch para resetear filtros dependientes cuando cambia región
 watch(() => query.region_id, (newVal, oldVal) => {
@@ -425,28 +456,57 @@ const cargarBases = async () => {
   }
 };
 
-const fetchBases = () => {
-  fetch('/api/bases')
-    .then(res => res.json())
-    .then(data => {
-      bases.value = data;
-    })
-    .catch(error => console.error('Error cargando bases:', error));
+// =============================================
+// FUNCIÓN CORREGIDA PARA CARGAR BASES
+// =============================================
+const fetchBases = async () => {
+  try {
+    // Usar el resource en lugar de fetch directo
+    const response = await baseResource.list();
+    bases.value = response.data || [];
+    console.log('Bases cargadas:', bases.value);
+  } catch (error) {
+    console.error('Error cargando bases:', error);
+    bases.value = [];
+  }
 };
 
 const getLista = () => {
   loading.value = true;
+  console.log('Consultando ronderos con query:', query);
+
   ronderoRequest
-    .list(query)
-    .then(({ data, meta }) => {
-      tableData.value = data;
-      total.value = meta.total;
-      loading.value = false;
-    })
-    .catch((err) => {
-      console.log(err);
-      loading.value = false;
-    });
+      .list(query)
+      .then((response) => {
+        console.log('Respuesta de ronderos:', response);
+        // Manejar diferentes estructuras de respuesta
+        if (response.data && response.meta) {
+          tableData.value = response.data;
+          total.value = response.meta.total;
+        } else if (Array.isArray(response)) {
+          tableData.value = response;
+          total.value = response.length;
+        } else if (response.data && Array.isArray(response.data)) {
+          tableData.value = response.data;
+          total.value = response.data.length;
+        } else {
+          tableData.value = [];
+          total.value = 0;
+        }
+        loading.value = false;
+      })
+      .catch((err) => {
+        console.error('Error al obtener ronderos:', err);
+        ElNotification({
+          type: 'error',
+          title: 'Error al cargar ronderos',
+          message: err.message || 'No se pudieron cargar los ronderos',
+          duration: 5000
+        });
+        tableData.value = [];
+        total.value = 0;
+        loading.value = false;
+      });
 };
 
 const addItem = () => {
@@ -484,27 +544,27 @@ const handleCommandAcciones = ({ item, action }) => {
         duration: 3000,
       });
       ronderoCarnetResource
-        .generarPDF({ id: item.id, url_front: window.location.origin })
-        .then((pdfBlob) => {
-          const blob = new Blob([pdfBlob], { type: 'application/pdf' });
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `carnet_rondero_${item.id}.pdf`;
-          link.style.display = 'none';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          setTimeout(() => URL.revokeObjectURL(url), 10000);
-          loading.value = false;
-        })
-        .catch((err) => {
-          console.log(err)
-          loading.value = false;
-        })
-        .finally(() => {
-          loading.value = false;
-        });
+          .generarPDF({ id: item.id, url_front: window.location.origin })
+          .then((pdfBlob) => {
+            const blob = new Blob([pdfBlob], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `carnet_rondero_${item.id}.pdf`;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+            loading.value = false;
+          })
+          .catch((err) => {
+            console.log(err)
+            loading.value = false;
+          })
+          .finally(() => {
+            loading.value = false;
+          });
     });
   }
   else if (action == 'EDIT' && validPermision('pub.rondero.actualizar')) {
@@ -523,15 +583,15 @@ const handleCommandAcciones = ({ item, action }) => {
       type: 'warning',
       dangerouslyUseHTMLString: true
     })
-      .then(() => {
-        ronderoRequest.destroy(item.id)
-          .then(() => {
-            ElNotification({ title: 'Rondero eliminado', type: 'success', duration: 2000 });
-            getLista();
-          })
-          .catch((err) => console.log(err));
-      })
-      .catch((err) => { console.log(err); });
+        .then(() => {
+          ronderoRequest.destroy(item.id)
+              .then(() => {
+                ElNotification({ title: 'Rondero eliminado', type: 'success', duration: 2000 });
+                getLista();
+              })
+              .catch((err) => console.log(err));
+        })
+        .catch((err) => { console.log(err); });
   }
   else if (action == 'DESACTIVAR' && validPermision('pub.rondero.eliminar')) {
     const msg = `¿Seguro que desea desactivar el registro?<br /><br />${item.persona.docIdentidad}`
@@ -543,15 +603,15 @@ const handleCommandAcciones = ({ item, action }) => {
       type: 'warning',
       dangerouslyUseHTMLString: true
     })
-      .then(() => {
-        estadoRonderoResource.inactivar(item.id)
-          .then(() => {
-            ElNotification({ title: 'Rondero desactivado', type: 'success', duration: 2000 });
-            getLista();
-          })
-          .catch((err) => console.log(err));
-      })
-      .catch((err) => { console.log(err); });
+        .then(() => {
+          estadoRonderoResource.inactivar(item.id)
+              .then(() => {
+                ElNotification({ title: 'Rondero desactivado', type: 'success', duration: 2000 });
+                getLista();
+              })
+              .catch((err) => console.log(err));
+        })
+        .catch((err) => { console.log(err); });
   }
   else if (action == 'ACTIVAR' && validPermision('pub.rondero.eliminar')) {
     const msg = `¿Seguro que desea Activar el registro?<br /><br />${item.persona.docIdentidad}`
@@ -563,15 +623,15 @@ const handleCommandAcciones = ({ item, action }) => {
       type: 'warning',
       dangerouslyUseHTMLString: true
     })
-      .then(() => {
-        estadoRonderoResource.activar(item.id)
-          .then(() => {
-            ElNotification({ title: 'Rondero Activo', type: 'success', duration: 2000 });
-            getLista();
-          })
-          .catch((err) => console.log(err));
-      })
-      .catch((err) => { console.log(err); });
+        .then(() => {
+          estadoRonderoResource.activar(item.id)
+              .then(() => {
+                ElNotification({ title: 'Rondero Activo', type: 'success', duration: 2000 });
+                getLista();
+              })
+              .catch((err) => console.log(err));
+        })
+        .catch((err) => { console.log(err); });
   }
 };
 
