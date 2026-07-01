@@ -6,8 +6,19 @@
   <component name="ChangeListManager">
     <list default="true" id="ce372d22-c1d4-4e96-85fe-586e42545805" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/BaseController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/BaseController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/RonderoController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/RonderoController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/SectorController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/SectorController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/config/dompdf.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/config/dompdf.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/config/filesystems.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/config/filesystems.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/resources/views/carnet.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/resources/views/carnet.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/routes/api.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/routes/api.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/api/publico/base.js" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/api/publico/base.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/api/publico/sector.js" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/api/publico/sector.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/bases/BasesView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/bases/BasesView.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/RonderosView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/RonderosView.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/components/EditRondero.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/components/EditRondero.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/sectores/SectoresView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/sectores/SectoresView.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -194,29 +205,30 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/xampp/htdocs/feroca&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;prettierjs.PrettierConfiguration.Package&quot;: &quot;C:\\laragon\\www\\feroca\\front-grc-rondas\\node_modules\\prettier&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;C:\\Program Files\\JetBrains\\PhpStorm 2025.2\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "git-widget-placeholder": "master",
+    "last_opened_file_path": "C:/xampp/htdocs/feroca",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "prettierjs.PrettierConfiguration.Package": "C:\\laragon\\www\\feroca\\front-grc-rondas\\node_modules\\prettier",
+    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\PhpStorm 2025.2\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;vue.recent.templates&quot;: [
-      &quot;Vue Composition API Component&quot;
+  "keyToStringList": {
+    "vue.recent.templates": [
+      "Vue Composition API Component"
     ]
   }
-}</component>
+}]]></component>
   <component name="RunManager">
     <configuration name="Main" type="PHPUnitRunConfigurationType" factoryName="PHPUnit">
       <TestRunner configuration_file="$PROJECT_DIR$/api-base-grc-rondas/phpunit.xml" scope="XML" use_alternative_configuration_file="true" />
@@ -242,7 +254,7 @@
       <workItem from="1778260080479" duration="26416000" />
       <workItem from="1778779977837" duration="405000" />
       <workItem from="1779209173690" duration="6576000" />
-      <workItem from="1782823276682" duration="6633000" />
+      <workItem from="1782823276682" duration="12864000" />
     </task>
     <servers />
   </component>

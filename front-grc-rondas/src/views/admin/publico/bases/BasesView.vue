@@ -2,6 +2,15 @@
   <div class="bases-view-container">
     <div class="header-section">
       <h3>Lista de Bases</h3>
+      <el-button
+        v-if="isSuperAdministrador"
+        type="danger"
+        plain
+        :icon="Delete"
+        @click="accionEliminarTodoRegistros"
+      >
+        Eliminar Todo
+      </el-button>
       <div class="filter-container">
         <el-input
           v-model="listQuery.keyword"
@@ -19,6 +28,30 @@
         </el-input>
       </div>
     </div>
+
+    <el-row :gutter="12" style="margin-bottom: 14px;">
+      <el-col :xs="24" :sm="12" :md="6">
+        <el-select v-model="listQuery.region_id" placeholder="Filtrar por Región" clearable filterable style="width: 100%" @change="handleRegionFilterChange">
+          <el-option v-for="item in listOptionsRegiones" :key="item.id" :label="item.descripcion" :value="item.id" />
+        </el-select>
+      </el-col>
+      <el-col :xs="24" :sm="12" :md="6">
+        <el-select v-model="listQuery.provincia_id" placeholder="Filtrar por Provincia" clearable filterable style="width: 100%" :disabled="!listQuery.region_id" @change="handleProvinciaFilterChange">
+          <el-option v-for="item in listOptionsProvincias" :key="item.id" :label="item.descripcion" :value="item.id" />
+        </el-select>
+      </el-col>
+      <el-col :xs="24" :sm="12" :md="6">
+        <el-select v-model="listQuery.distrito_id" placeholder="Filtrar por Distrito" clearable filterable style="width: 100%" :disabled="!listQuery.provincia_id" @change="handleDistritoFilterChange">
+          <el-option v-for="item in listOptionsDistritos" :key="item.id" :label="item.descripcion" :value="item.id" />
+        </el-select>
+      </el-col>
+      <el-col :xs="24" :sm="12" :md="6">
+        <el-select v-model="listQuery.sector_zona_id" placeholder="Filtrar por Sector" clearable filterable style="width: 100%" :disabled="!listQuery.distrito_id" @change="applyListFilters">
+          <el-option label="Sin Sector" value="sin-sector" />
+          <el-option v-for="item in listOptionsSectors" :key="item.id" :label="item.descripcion" :value="item.id" />
+        </el-select>
+      </el-col>
+    </el-row>
 
     <!-- Tabla responsiva sin saltos de línea -->
     <div class="table-container">
@@ -71,7 +104,7 @@
             <el-tag v-else type="danger" size="small">Inactivo</el-tag>
           </template>
         </el-table-column>
-        <el-table-column align="center" width="120" fixed="right">
+        <el-table-column align="center" width="150" fixed="right">
           <template #header>
             <el-button type="primary" size="small" :icon="Plus" @click="openFormCreate" v-if="!isActionDisabled('pub.bases.crear')">
               Agregar
@@ -82,6 +115,11 @@
               <el-tooltip effect="dark" content="Editar" placement="top">
                 <el-icon size="18" style="cursor: pointer; color: #E3CB2DFF;" @click="openFormEditar(scope.row.id)" v-if="!isActionDisabled('pub.bases.actualizar')">
                   <Edit />
+                </el-icon>
+              </el-tooltip>
+              <el-tooltip v-if="isSuperAdministrador" effect="dark" content="Eliminar" placement="top">
+                <el-icon size="18" style="cursor: pointer; color: #d03050;" @click="accionEliminarRegistro(scope.row.id, scope.row.nombre_descripcion)">
+                  <Delete />
                 </el-icon>
               </el-tooltip>
               <slot v-if="!isActionDisabled('pub.bases.eliminar')">
@@ -303,7 +341,7 @@
 <script>
 import { ref, reactive, onMounted, nextTick, markRaw, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Search, Plus, Edit, Check, Close } from '@element-plus/icons-vue';
+import { Search, Plus, Edit, Delete, Check, Close } from '@element-plus/icons-vue';
 import { useAuthStore } from "@/stores/AuthStore";
 import BaseResource from '@/api/publico/base';
 import RegionResource from '@/api/publico/region';
@@ -315,7 +353,7 @@ import axios from 'axios';
 
 export default {
   name: 'BasesView',
-  components: { Edit, Close, Check },
+  components: { Edit, Delete, Close, Check },
   methods: { isActionDisabled },
   setup() {
     const regionResource = new RegionResource();
@@ -324,6 +362,21 @@ export default {
     const sectorResource = new SectorResource();
     const baseResource = new BaseResource();
     const authStore = useAuthStore();
+    const isSuperAdministrador = computed(() => {
+      const roles = Array.isArray(authStore.roles) ? authStore.roles : [];
+
+      return roles.some((role) => {
+        const roleName = typeof role === 'string'
+          ? role
+          : (role?.name || role?.descripcion || '');
+
+        return roleName
+          .toString()
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, '') === 'superadministrador';
+      });
+    });
     const detalleRonderos = ref([]);
     const formCreateEditBase = ref(null);
     const nombre_descripcionField = ref(null);
@@ -361,7 +414,15 @@ export default {
     const tableData = ref([]);
     const meta = ref({});
     const listLoading = ref(true);
-    const listQuery = reactive({ page: 1, limit: 10, keyword: '' });
+    const listQuery = reactive({
+      page: 1,
+      limit: 10,
+      keyword: '',
+      region_id: null,
+      provincia_id: null,
+      distrito_id: null,
+      sector_zona_id: null,
+    });
     const visibleDialogForm = ref(false);
     const titleDialogForm = ref('');
     const loadingSaveDialogForm = ref(false);
@@ -369,6 +430,10 @@ export default {
     const optionsProvincias = ref([]);
     const optionsDistritos = ref([]);
     const optionsSectors = ref([]);
+    const listOptionsRegiones = ref([]);
+    const listOptionsProvincias = ref([]);
+    const listOptionsDistritos = ref([]);
+    const listOptionsSectors = ref([]);
 
     const formatNombre = (nombres, paterno, materno) => {
       const nombreCompleto = `${nombres || ''} ${paterno || ''} ${materno || ''}`.trim();
@@ -550,6 +615,42 @@ export default {
       }).catch(() => ElMessage.info('Operación cancelada'));
     };
 
+    const accionEliminarRegistro = (id, nombre) => {
+      ElMessageBox.confirm(`¿Seguro que desea eliminar la base <em>${nombre}</em>?`, 'Atención', {
+        top: '5vh',
+        icon: markRaw(Delete),
+        confirmButtonText: 'Si, eliminar',
+        cancelButtonText: 'Cancelar',
+        type: 'warning',
+        dangerouslyUseHTMLString: true,
+      }).then(() => {
+        baseResource.destroy(id).then(() => {
+          ElMessage.success('Base eliminada');
+          fetchBases();
+        }).catch((error) => {
+          ElMessage.error(error.response?.data?.message || 'Error al eliminar la base');
+        });
+      }).catch(() => ElMessage.info('Operación cancelada'));
+    };
+
+    const accionEliminarTodoRegistros = () => {
+      ElMessageBox.confirm('¿Seguro que desea eliminar todas las bases encontradas con los filtros actuales?', 'Atención', {
+        top: '5vh',
+        icon: markRaw(Delete),
+        confirmButtonText: 'Si, eliminar todo',
+        cancelButtonText: 'Cancelar',
+        type: 'warning',
+      }).then(() => {
+        baseResource.eliminarMasivo({ ...listQuery }).then((response) => {
+          const eliminados = response?.deleted_count ?? response?.data?.deleted_count ?? 0;
+          ElMessage.success(`Bases eliminadas: ${eliminados}`);
+          fetchBases();
+        }).catch((error) => {
+          ElMessage.error(error.response?.data?.message || 'Error al eliminar bases');
+        });
+      }).catch(() => ElMessage.info('Operación cancelada'));
+    };
+
     const accionActivarRegistro = (id, nombre) => {
       ElMessageBox.confirm(`¿Seguro que desea Activar la base <em>${nombre}</em>?`, 'Atención', {
         top: '5vh',
@@ -574,6 +675,83 @@ export default {
     const handleBuscarDatos = () => {
       listQuery.page = 1;
       fetchBases();
+    };
+
+    const applyListFilters = () => {
+      listQuery.page = 1;
+      fetchBases();
+    };
+
+    const loadFilterRegiones = async () => {
+      try {
+        const { data } = await regionResource.list();
+        listOptionsRegiones.value = data || [];
+      } catch (error) {
+        console.error('Error cargando regiones filtro:', error);
+      }
+    };
+
+    const handleRegionFilterChange = async (regionId) => {
+      listQuery.provincia_id = null;
+      listQuery.distrito_id = null;
+      listQuery.sector_zona_id = null;
+      listOptionsDistritos.value = [];
+      listOptionsSectors.value = [];
+
+      if (!regionId) {
+        listOptionsProvincias.value = [];
+        applyListFilters();
+        return;
+      }
+
+      try {
+        const response = await provinciaResource.getProvincias(regionId);
+        listOptionsProvincias.value = response.data || response || [];
+      } catch (error) {
+        console.error('Error cargando provincias filtro:', error);
+      }
+
+      applyListFilters();
+    };
+
+    const handleProvinciaFilterChange = async (provinciaId) => {
+      listQuery.distrito_id = null;
+      listQuery.sector_zona_id = null;
+      listOptionsSectors.value = [];
+
+      if (!provinciaId) {
+        listOptionsDistritos.value = [];
+        applyListFilters();
+        return;
+      }
+
+      try {
+        const response = await distritoResource.getDistritos(provinciaId);
+        listOptionsDistritos.value = response.data || response || [];
+      } catch (error) {
+        console.error('Error cargando distritos filtro:', error);
+      }
+
+      applyListFilters();
+    };
+
+    const handleDistritoFilterChange = async (distritoId) => {
+      listQuery.sector_zona_id = null;
+
+      if (!distritoId) {
+        listOptionsSectors.value = [];
+        applyListFilters();
+        return;
+      }
+
+      try {
+        const response = await sectorResource.getSectores(distritoId);
+        listOptionsSectors.value = response.data || response || [];
+      } catch (error) {
+        console.error('Error cargando sectores filtro:', error);
+      }
+
+      applyListFilters();
     };
 
     const handleCurrentChange = (val) => {
@@ -629,6 +807,7 @@ export default {
     onMounted(() => {
       fetchBases();
       fetchRegiones();
+      loadFilterRegiones();
     });
 
     return {
@@ -652,20 +831,32 @@ export default {
       handleCurrentChange,
       accionActivarRegistro,
       accionDesactivarRegistro,
+      accionEliminarRegistro,
+      accionEliminarTodoRegistros,
+      isSuperAdministrador,
       optionsRegiones,
       optionsProvincias,
       optionsDistritos,
       optionsSectors,
+      listOptionsRegiones,
+      listOptionsProvincias,
+      listOptionsDistritos,
+      listOptionsSectors,
       detalleRonderos,
       fetchProvinciasByRegion,
       fetchDistritosByProvincia,
       fetchSectoresByDistrito,
+      handleRegionFilterChange,
+      handleProvinciaFilterChange,
+      handleDistritoFilterChange,
+      applyListFilters,
       formatNombre,
       isMobile,
       dialogWidth,
       Search,
       Plus,
       Edit,
+      Delete,
     };
   }
 };

@@ -27,6 +27,14 @@ class BasesResource extends Resource {
       method: 'get'
     })
   }
+
+  eliminarMasivo(payload) {
+    return request({
+      url: '/publico/bases/eliminar-masivo',
+      method: 'post',
+      data: payload,
+    })
+  }
 }
 
 export { BasesResource as default }

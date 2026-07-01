@@ -1,5 +1,28 @@
 <?php
 
+$resolveExistingPath = static function (array $candidates, ?string $fallback = null) {
+    foreach ($candidates as $candidate) {
+        if (!empty($candidate) && file_exists($candidate)) {
+            return $candidate;
+        }
+    }
+
+    return $fallback ?? $candidates[array_key_last($candidates)] ?? null;
+};
+
+$userImagesRoot = $resolveExistingPath([
+    env('PATH_USER_IMAGES'),
+    public_path('user_avatars'),
+    storage_path('app/public/user_avatars'),
+]);
+
+$filesRondasRoot = $resolveExistingPath([
+    env('PATH_STORAGE_FILES_RONDAS'),
+    public_path('files_rondas'),
+    storage_path('app/files_rondas'),
+    storage_path('files_rondas'),
+], storage_path('app/files_rondas'));
+
 return [
 
     /*
@@ -58,7 +81,7 @@ return [
 
         'user_avatars' => [
             'driver' => 'local',
-            'root' => env('PATH_USER_IMAGES'),
+            'root' => $userImagesRoot,
             'url' => env('APP_URL').'/avatar',
             'visibility' => 'public',
             'throw' => false,
@@ -67,7 +90,7 @@ return [
 
         'files_rondas' => [
             'driver' => 'local',
-            'root' => env('PATH_STORAGE_FILES_RONDAS'),
+            'root' => $filesRondasRoot,
             'url' => env('APP_URL').'/files_rondas',
             'visibility' => 'public',
             'throw' => false,
@@ -88,8 +111,8 @@ return [
 
     'links' => [
         public_path('storage') => storage_path('app/public'),
-        public_path('user_avatars') => env('PATH_USER_IMAGES'),
-        public_path('files_rondas') => env('PATH_STORAGE_FILES_RONDAS'),
+        public_path('user_avatars') => $userImagesRoot,
+        public_path('files_rondas') => $filesRondasRoot,
     ],
 
 ];

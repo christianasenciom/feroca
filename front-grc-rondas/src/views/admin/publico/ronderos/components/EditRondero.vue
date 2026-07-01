@@ -523,6 +523,11 @@ const submitForm = async (formEl) => {
   await formEl.validate(async (valid) => {
     if (valid) {
       try {
+        const fotoPersona = form_rondero.persona.foto || null;
+        const fotoParaEnviar = typeof fotoPersona === 'string' && fotoPersona.startsWith('data:')
+          ? fotoPersona.split(',')[1]
+          : null;
+
         const datosParaEnviar = {
           id: form_rondero.id,
           fecha_inicio: form_rondero.fecha_inicio || null,
@@ -544,7 +549,7 @@ const submitForm = async (formEl) => {
             direccion: form_rondero.persona.direccion || null,
             celular: form_rondero.persona.celular || null,
             email: form_rondero.persona.email || null,
-            foto: form_rondero.persona.foto || null
+            foto: fotoParaEnviar
           }
         };
 

@@ -28,6 +28,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Resources\Admin\Auth\UserResource;
 use Carbon\Carbon;
+use App\Services\ReniecService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Facades\Image;
@@ -112,48 +113,7 @@ public function store(RonderoRequest $request)
         // Comenzamos una transacción para asegurarnos que ambos registros sean creados o no se realicen cambios en caso de algún error
         DB::beginTransaction();
 
-        $imageName = null;
-        $base64Image = $request->input('foto');
-
-        if (!empty($base64Image)) {
-            try {
-                // Manejar ambos formatos: base64 puro y base64 con prefijo data:image
-                if (str_starts_with($base64Image, 'data:image')) {
-                    // Extraer solo el base64 (sin el prefijo data:image/...)
-                    $base64Image = preg_replace('/^data:image\/\w+;base64,/', '', $base64Image);
-                }
-
-                // Decodificar la imagen base64
-                $image = base64_decode($base64Image);
-
-                // Verificar si la decodificación fue exitosa
-                if ($image === false) {
-                    throw new \Exception('Error al decodificar la imagen base64');
-                }
-
-                // Verificar que sea una imagen válida
-                if (strlen($image) < 100) {
-                    throw new \Exception('La imagen es demasiado pequeña o inválida');
-                }
-
-                // Crear un nombre de archivo único
-                $imageName = 'imagen_' . time() . '_' . Str::random(10) . '.jpg';
-
-                // Crear directorio si no existe
-                $directory = 'fotos_personas';
-                if (!Storage::disk('files_rondas')->exists($directory)) {
-                    Storage::disk('files_rondas')->makeDirectory($directory);
-                }
-
-                // Guardar la imagen en el disco
-                Storage::disk('files_rondas')->put($directory . '/' . $imageName, $image);
-
-            } catch (\Exception $e) {
-                // Si hay error al procesar la imagen, continuar sin foto
-                Log::warning('Error al procesar foto del rondero: ' . $e->getMessage());
-                $imageName = null;
-            }
-        }
+        $imageName = $this->persistirFotoDesdeEntrada($request->input('foto'));
 
         // Verificamos si ya existe un usuario con el DNI proporcionado
         $persona_existe = Persona::where('docIdentidad', $request->input('docIdentidad'))->exists();
@@ -178,7 +138,7 @@ public function store(RonderoRequest $request)
         $persona->email = $request->input('email', $persona->email ?? null);
         $persona->direccion = $request->input('direccion');
         $persona->celular = $request->input('celular');
-        $persona->foto = $imageName ?? ($persona->foto ?? '');
+        $persona->foto = $imageName ?: $this->normalizarNombreFoto($persona->foto ?? '');
         $persona->save();
 
         // 🔥 GENERAR CÓDIGO DE RONDERO AUTOMÁTICAMENTE
@@ -324,9 +284,20 @@ private function generarCodigoRondero()
             $persona->celular = $request->input('persona.celular');
             $persona->email = $request->input('persona.email');
 
-            // Manejo de foto - mantener la existente si no se envía nueva
-            if ($request->has('persona.foto') && !empty($request->input('persona.foto'))) {
-                $persona->foto = $request->input('persona.foto');
+            // Manejo de foto - guardar base64 nuevo o normalizar URL/nombre existente
+            if ($request->has('persona.foto')) {
+                $fotoAnterior = $this->normalizarNombreFoto($persona->foto ?? '');
+                $fotoActualizada = $this->persistirFotoDesdeEntrada($request->input('persona.foto'), $fotoAnterior);
+
+                if (!empty($fotoActualizada)) {
+                    if (!empty($fotoAnterior) && $fotoAnterior !== $fotoActualizada) {
+                        $this->eliminarFotoAnteriorSiExiste($fotoAnterior);
+                    }
+
+                    $persona->foto = $fotoActualizada;
+                } else {
+                    $persona->foto = $fotoAnterior;
+                }
             }
 
             $persona->save();
@@ -355,6 +326,8 @@ private function generarCodigoRondero()
      */
     private function eliminarFotoAnteriorSiExiste($nombreArchivo)
     {
+        $nombreArchivo = $this->normalizarNombreFoto($nombreArchivo);
+
         if (!empty($nombreArchivo)) {
             try {
                 $rutaRelativa = 'fotos_personas/' . $nombreArchivo;
@@ -369,11 +342,139 @@ private function generarCodigoRondero()
         }
         return false;
     }
+
+    private function normalizarNombreFoto(?string $foto): ?string
+    {
+        if (empty($foto)) {
+            return null;
+        }
+
+        $foto = trim($foto);
+
+        if (str_starts_with($foto, 'data:image')) {
+            return null;
+        }
+
+        if (filter_var($foto, FILTER_VALIDATE_URL)) {
+            $path = parse_url($foto, PHP_URL_PATH) ?: '';
+            $basename = basename($path);
+            return $basename !== '.' && $basename !== '/' ? $basename : null;
+        }
+
+        if (str_contains($foto, '/')) {
+            $basename = basename(parse_url($foto, PHP_URL_PATH) ?: $foto);
+            return $basename !== '.' && $basename !== '/' ? $basename : null;
+        }
+
+        return $foto;
+    }
+
+    private function obtenerImagenDesdeEntrada(?string $foto): ?array
+    {
+        if (empty($foto)) {
+            return null;
+        }
+
+        $mime = 'image/jpeg';
+        $payload = trim($foto);
+
+        if (preg_match('/^data:(image\/[a-zA-Z0-9.+-]+);base64,/', $payload, $matches)) {
+            $mime = $matches[1];
+            $payload = preg_replace('/^data:image\/[a-zA-Z0-9.+-]+;base64,/', '', $payload);
+        }
+
+        $binary = base64_decode($payload, true);
+
+        if ($binary === false || strlen($binary) < 100) {
+            return null;
+        }
+
+        $imageInfo = @getimagesizefromstring($binary);
+        if ($imageInfo === false || empty($imageInfo['mime'])) {
+            return null;
+        }
+
+        return [
+            'binary' => $binary,
+            'mime' => $imageInfo['mime'] ?? $mime,
+        ];
+    }
+
+    private function persistirFotoDesdeEntrada(?string $foto, ?string $fotoActual = null): ?string
+    {
+        $imagen = $this->obtenerImagenDesdeEntrada($foto);
+
+        if ($imagen !== null) {
+            try {
+                $extension = match ($imagen['mime']) {
+                    'image/png' => 'png',
+                    'image/gif' => 'gif',
+                    'image/webp' => 'webp',
+                    default => 'jpg',
+                };
+
+                $imageName = 'imagen_' . time() . '_' . Str::random(10) . '.' . $extension;
+                $directory = 'fotos_personas';
+
+                if (!Storage::disk('files_rondas')->exists($directory)) {
+                    Storage::disk('files_rondas')->makeDirectory($directory);
+                }
+
+                Storage::disk('files_rondas')->put($directory . '/' . $imageName, $imagen['binary']);
+
+                return $imageName;
+            } catch (\Exception $e) {
+                Log::warning('Error al procesar foto del rondero: ' . $e->getMessage());
+                return $fotoActual;
+            }
+        }
+
+        return $this->normalizarNombreFoto($foto) ?: $fotoActual;
+    }
+
+    private function recuperarFotoDesdeReniec(Persona $persona): ?string
+    {
+        try {
+            if (empty($persona->docIdentidad)) {
+                return null;
+            }
+
+            /** @var ReniecService $reniecService */
+            $reniecService = app(ReniecService::class);
+            $datosReniec = $reniecService->consultarDNI($persona->docIdentidad);
+            $fotoBase64 = $datosReniec['foto_base64'] ?? null;
+
+            if (empty($fotoBase64) || !is_string($fotoBase64)) {
+                return null;
+            }
+
+            $fotoRecuperada = $this->persistirFotoDesdeEntrada($fotoBase64, $this->normalizarNombreFoto($persona->foto ?? ''));
+
+            if (!empty($fotoRecuperada)) {
+                $persona->foto = $fotoRecuperada;
+                $persona->save();
+                Log::info('Foto recuperada desde RENIEC para persona DNI: ' . $persona->docIdentidad);
+                return $fotoRecuperada;
+            }
+        } catch (\Exception $e) {
+            Log::warning('No se pudo recuperar foto desde RENIEC para DNI ' . ($persona->docIdentidad ?? 'N/A') . ': ' . $e->getMessage());
+        }
+
+        return null;
+    }
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
+        if (!auth()->check() || !auth()->user()->hasRole('SuperAdministrador')) {
+            $msg = [
+                'title' => 'Acceso denegado',
+                'message' => 'Solo el SuperAdministrador puede eliminar ronderos',
+            ];
+            return response()->json(['error' => $msg], Response::HTTP_FORBIDDEN);
+        }
+
         try {
             $rondero = Rondero::query()->findOrFail($id);
             $rondero->eliminado = true;
@@ -463,8 +564,30 @@ private function generarCodigoRondero()
    public function generarCarnet(Request $request)
     {
         $data = [];
+        $tempFiles = [];
         $id = $request->input('id');
         $url_front = $request->input('url_front');
+        $appUrl = rtrim(config('app.url'), '/');
+
+        if (empty($url_front)) {
+            $origin = $request->headers->get('origin');
+            $referer = $request->headers->get('referer');
+
+            if (!empty($origin)) {
+                $url_front = rtrim($origin, '/');
+            } elseif (!empty($referer)) {
+                $parsedReferer = parse_url($referer);
+                if (!empty($parsedReferer['scheme']) && !empty($parsedReferer['host'])) {
+                    $url_front = $parsedReferer['scheme'] . '://' . $parsedReferer['host'] . (!empty($parsedReferer['port']) ? ':' . $parsedReferer['port'] : '');
+                }
+            }
+        }
+
+        if (empty($url_front)) {
+            $url_front = $appUrl;
+        }
+
+        $url_front = rtrim($url_front, '/');
 
         if($id != null) {
             try {
@@ -477,6 +600,7 @@ private function generarCodigoRondero()
 
                 // Texto QR
                 $texto_qr = $url_front . '/validar-qr?qr=' . $rondero->codigo_qr;
+                Log::info('URL usada para QR: ' . $texto_qr);
 
                 // Create QR code
                 $writer = new PngWriter();
@@ -490,15 +614,38 @@ private function generarCodigoRondero()
                     ->setBackgroundColor(new Color(255, 255, 255));
 
                 $result = $writer->write($qrCode);
-                $dataUri = $result->getDataUri();
-                $data['qrCodePath'] = $dataUri;
+
+                // Guardar QR dentro del proyecto para que DomPDF pueda leerlo respetando el chroot
+                $tempDirectory = storage_path('app/carnets_temp');
+                if (!is_dir($tempDirectory)) {
+                    mkdir($tempDirectory, 0755, true);
+                }
+
+                $qrTempPath = $tempDirectory . DIRECTORY_SEPARATOR . 'qr_carnet_' . $rondero->id . '_' . time() . '.png';
+                file_put_contents($qrTempPath, $result->getString());
+                $data['qrCodePath'] = 'file://' . str_replace('\\', '/', $qrTempPath);
+                $tempFiles[] = $qrTempPath;
 
                 // ====== SOLUCIÓN DEFINITIVA PARA LA FOTO ======
                 $foto_final = '';
+                $foto_mime = 'image/jpeg'; // MIME por defecto
+                $foto_path = '';
 
                 if (!empty($rondero->persona->foto)) {
                     try {
-                        $nombreArchivo = $rondero->persona->foto;
+                        $nombreArchivoOriginal = $rondero->persona->foto;
+                        $nombreArchivo = $this->normalizarNombreFoto($nombreArchivoOriginal);
+
+                        if (!empty($nombreArchivo) && $nombreArchivo !== $nombreArchivoOriginal) {
+                            $rondero->persona->foto = $nombreArchivo;
+                            $rondero->persona->save();
+                            Log::info('Foto normalizada en BD: ' . $nombreArchivo);
+                        }
+
+                        if (empty($nombreArchivo)) {
+                            throw new \Exception('El valor almacenado en persona.foto no es válido');
+                        }
+
                         $rutaRelativa = 'fotos_personas/' . $nombreArchivo;
 
                         // DEBUG: Verificar disco configurado
@@ -509,29 +656,83 @@ private function generarCodigoRondero()
                         if (Storage::disk('files_rondas')->exists($rutaRelativa)) {
                             $imageData = Storage::disk('files_rondas')->get($rutaRelativa);
                             $foto_final = base64_encode($imageData);
+                            $realPath = Storage::disk('files_rondas')->path($rutaRelativa);
+                            if (file_exists($realPath)) {
+                                $foto_path = 'file://' . str_replace('\\', '/', $realPath);
+                            }
+
+                            // Detectar MIME type real del binario
+                            if (function_exists('finfo_buffer')) {
+                                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                                $detectedMime = finfo_buffer($finfo, $imageData);
+                                finfo_close($finfo);
+                                if ($detectedMime && str_starts_with($detectedMime, 'image/')) {
+                                    $foto_mime = $detectedMime;
+                                }
+                            }
 
                             Log::info("✓ Foto encontrada en disco 'files_rondas'");
                             Log::info("✓ Tamaño imagen: " . strlen($imageData) . " bytes");
+                            Log::info("✓ MIME detectado: " . $foto_mime);
                             Log::info("✓ Ruta completa: " . Storage::disk('files_rondas')->path($rutaRelativa));
 
                         } else {
                             Log::warning("✗ Foto NO encontrada en disco 'files_rondas'");
 
+                            $fotoRecuperada = $this->recuperarFotoDesdeReniec($rondero->persona);
+                            if (!empty($fotoRecuperada)) {
+                                $nombreArchivo = $fotoRecuperada;
+                                $rutaRelativa = 'fotos_personas/' . $nombreArchivo;
+
+                                if (Storage::disk('files_rondas')->exists($rutaRelativa)) {
+                                    $imageData = Storage::disk('files_rondas')->get($rutaRelativa);
+                                    $foto_final = base64_encode($imageData);
+                                    $realPath = Storage::disk('files_rondas')->path($rutaRelativa);
+                                    if (file_exists($realPath)) {
+                                        $foto_path = 'file://' . str_replace('\\', '/', $realPath);
+                                    }
+
+                                    if (function_exists('finfo_buffer')) {
+                                        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                                        $detectedMime = finfo_buffer($finfo, $imageData);
+                                        finfo_close($finfo);
+                                        if ($detectedMime && str_starts_with($detectedMime, 'image/')) {
+                                            $foto_mime = $detectedMime;
+                                        }
+                                    }
+
+                                    Log::info("✓ Foto recuperada desde RENIEC y encontrada en disco local");
+                                }
+                            }
+
                             // 2. SEGUNDO: Buscar en rutas alternativas comunes
-                            $rutasAlternativas = [
-                                // Ruta del disco files_rondas (obtenida de config)
-                                config('filesystems.disks.files_rondas.root') . '/fotos_personas/' . $nombreArchivo,
-                                // Rutas comunes de Laravel
+                            $rutasAlternativas = array_filter(array_unique([
+                                // Ruta del disco files_rondas resuelta por configuración
+                                config('filesystems.disks.files_rondas.root') . DIRECTORY_SEPARATOR . 'fotos_personas' . DIRECTORY_SEPARATOR . $nombreArchivo,
+                                // Rutas comunes de Laravel en desarrollo/producción
                                 public_path('files_rondas/fotos_personas/' . $nombreArchivo),
+                                public_path('user_avatars/' . $nombreArchivo),
+                                storage_path('app/files_rondas/fotos_personas/' . $nombreArchivo),
+                                storage_path('files_rondas/fotos_personas/' . $nombreArchivo),
                                 storage_path('app/public/fotos_personas/' . $nombreArchivo),
-                                storage_path('fotos_personas/' . $nombreArchivo),
-                            ];
+                                public_path($nombreArchivo),
+                            ]));
 
                             foreach ($rutasAlternativas as $ruta) {
                                 Log::info("Buscando en ruta alternativa: " . $ruta);
                                 if (file_exists($ruta)) {
                                     $imageData = file_get_contents($ruta);
                                     $foto_final = base64_encode($imageData);
+                                    $foto_path = 'file://' . str_replace('\\', '/', $ruta);
+                                    // Detectar MIME type real
+                                    if (function_exists('finfo_buffer')) {
+                                        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                                        $detectedMime = finfo_buffer($finfo, $imageData);
+                                        finfo_close($finfo);
+                                        if ($detectedMime && str_starts_with($detectedMime, 'image/')) {
+                                            $foto_mime = $detectedMime;
+                                        }
+                                    }
                                     Log::info("✓ Foto encontrada en ruta alternativa");
                                     break;
                                 }
@@ -539,16 +740,59 @@ private function generarCodigoRondero()
                         }
 
                         // 3. Si aún no se encontró, verificar si el nombre ya es base64
-                        if (empty($foto_final) && base64_decode($nombreArchivo, true) !== false) {
-                            $foto_final = $nombreArchivo;
-                            Log::info("✓ El nombre de archivo es base64 directo");
+                        if (empty($foto_final)) {
+                            $base64Limpio = preg_replace('/^data:image\/[a-zA-Z0-9.+-]+;base64,/', '', $nombreArchivoOriginal);
+                            $imageData = base64_decode($base64Limpio, true);
+
+                            if ($imageData !== false && strlen($imageData) > 100) {
+                                $foto_final = base64_encode($imageData);
+
+                                if (function_exists('finfo_buffer')) {
+                                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                                    $detectedMime = finfo_buffer($finfo, $imageData);
+                                    finfo_close($finfo);
+                                    if ($detectedMime && str_starts_with($detectedMime, 'image/')) {
+                                        $foto_mime = $detectedMime;
+                                    }
+                                }
+
+                                $extension = match ($foto_mime) {
+                                    'image/png' => 'png',
+                                    'image/gif' => 'gif',
+                                    'image/webp' => 'webp',
+                                    default => 'jpg',
+                                };
+
+                                $fotoTempPath = $tempDirectory . DIRECTORY_SEPARATOR . 'foto_carnet_' . $rondero->id . '_' . time() . '.' . $extension;
+                                file_put_contents($fotoTempPath, $imageData);
+                                $foto_path = 'file://' . str_replace('\\', '/', $fotoTempPath);
+                                $tempFiles[] = $fotoTempPath;
+                                Log::info("✓ La foto fue reconstruida desde base64");
+                            }
                         }
 
                         // 4. Si después de todo no se encontró
                         if (empty($foto_final)) {
-                            Log::error("✗ Foto no encontrada en ninguna ubicación");
-                            // Puedes usar una imagen por defecto si quieres
-                            // $foto_final = $this->getDefaultUserImageBase64();
+                            $foto_final = $this->getDefaultUserImageBase64();
+
+                            if (!empty($foto_final)) {
+                                $base64Default = base64_decode($foto_final, true);
+                                if ($base64Default !== false) {
+                                    $defaultImagePath = public_path('images/default-user.jpg');
+                                    if (file_exists($defaultImagePath)) {
+                                        $foto_path = 'file://' . str_replace('\\', '/', $defaultImagePath);
+                                        $foto_mime = 'image/jpeg';
+                                    } else {
+                                        $defaultTempPath = $tempDirectory . DIRECTORY_SEPARATOR . 'foto_default_' . $rondero->id . '_' . time() . '.jpg';
+                                        file_put_contents($defaultTempPath, $base64Default);
+                                        $foto_path = 'file://' . str_replace('\\', '/', $defaultTempPath);
+                                        $foto_mime = 'image/jpeg';
+                                        $tempFiles[] = $defaultTempPath;
+                                    }
+                                }
+                            }
+
+                            Log::warning("✗ Foto no encontrada en ninguna ubicación, se usará imagen por defecto");
                         }
 
                     } catch (\Exception $e) {
@@ -558,11 +802,11 @@ private function generarCodigoRondero()
                     }
                 } else {
                     Log::info("No hay foto registrada en la BD");
-                    // Puedes usar una imagen por defecto
-                    // $foto_final = $this->getDefaultUserImageBase64();
                 }
 
                 $data['foto'] = $foto_final; // Base64 PURO o vacío
+                $data['foto_mime'] = $foto_mime; // MIME type detectado
+                $data['fotoPath'] = $foto_path;
                 Log::info("Foto enviada a vista (longitud base64): " . strlen($foto_final));
                 // ====== FIN SOLUCIÓN FOTO ======
 
@@ -649,6 +893,7 @@ private function generarCodigoRondero()
                 // DEBUG: Resumen final
                 Log::info("=== RESUMEN DATOS ENVIADOS A VISTA ===");
                 Log::info("Foto (base64 length): " . strlen($data['foto']));
+                Log::info("Foto MIME: " . $data['foto_mime']);
                 Log::info("Nombres: " . $data['nombres']);
                 Log::info("DNI: " . $data['numero']);
                 Log::info("=====================================");
@@ -694,6 +939,12 @@ private function generarCodigoRondero()
             return response()->json([
                 'error' => 'Error al generar el PDF del carnet: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        } finally {
+            foreach ($tempFiles as $tempFile) {
+                if (!empty($tempFile) && file_exists($tempFile)) {
+                    @unlink($tempFile);
+                }
+            }
         }
     }
 
@@ -715,7 +966,8 @@ public function testFotoRondero($id)
         ];
 
         if (!empty($rondero->persona->foto)) {
-            $rutaRelativa = 'fotos_personas/' . $rondero->persona->foto;
+            $nombreArchivo = $this->normalizarNombreFoto($rondero->persona->foto);
+            $rutaRelativa = 'fotos_personas/' . $nombreArchivo;
 
             // Verificar en disco files_rondas
             $resultado['existe_en_disco'] = Storage::disk('files_rondas')->exists($rutaRelativa);
@@ -796,7 +1048,13 @@ public function testFotoRondero($id)
                 return response()->json(['error' => 'No hay foto'], 404);
             }
 
-            $rutaRelativa = 'fotos_personas/' . $rondero->persona->foto;
+            $nombreArchivo = $this->normalizarNombreFoto($rondero->persona->foto);
+
+            if (empty($nombreArchivo)) {
+                return response()->json(['error' => 'Foto no válida'], 404);
+            }
+
+            $rutaRelativa = 'fotos_personas/' . $nombreArchivo;
 
             if (!Storage::disk('files_rondas')->exists($rutaRelativa)) {
                 return response()->json(['error' => 'Foto no encontrada'], 404);
@@ -807,7 +1065,7 @@ public function testFotoRondero($id)
 
             return response($file, 200)
                 ->header('Content-Type', $mimeType)
-                ->header('Content-Disposition', 'inline; filename="' . $rondero->persona->foto . '"');
+                ->header('Content-Disposition', 'inline; filename="' . $nombreArchivo . '"');
 
         } catch (\Exception $e) {
             Log::error('Error al obtener foto: ' . $e->getMessage());
@@ -834,7 +1092,8 @@ public function testFotoRondero($id)
             ];
 
             if (!empty($rondero->persona->foto)) {
-                $ruta = public_path('files_rondas/fotos_personas/' . $rondero->persona->foto);
+                $nombreArchivo = $this->normalizarNombreFoto($rondero->persona->foto);
+                $ruta = public_path('files_rondas/fotos_personas/' . $nombreArchivo);
                 $response['ruta_buscada'] = $ruta;
                 $response['existe_archivo'] = file_exists($ruta);
 

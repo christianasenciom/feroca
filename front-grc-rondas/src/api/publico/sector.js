@@ -11,6 +11,14 @@ class SectorResource extends Resource {
       method: 'get'
     })
   }
+
+  eliminarMasivo(payload) {
+    return request({
+      url: '/publico/sectores/eliminar-masivo',
+      method: 'post',
+      data: payload,
+    })
+  }
 }
 
 export { SectorResource as default }

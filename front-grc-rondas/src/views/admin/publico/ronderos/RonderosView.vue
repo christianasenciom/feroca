@@ -182,6 +182,11 @@
               <Edit />
             </el-icon>
           </el-tooltip>
+          <el-tooltip class="box-item" effect="dark" content="Eliminar (solo SuperAdministrador)" placement="top-start" v-if="isSuperAdministrador">
+            <el-icon size="20" style="margin-right: 10px; cursor: pointer;" @click="handleCommandAcciones({ item: scope.row, action: 'DELETE' })" color="#d03050">
+              <Delete />
+            </el-icon>
+          </el-tooltip>
           <slot v-if="!isActionDisabled('pub.rondero.eliminar')">
             <el-tooltip class="box-item" effect="dark" content="Desactivar" placement="top-start" v-if="scope.row.estado">
               <el-icon size="20" style="margin-right: 10px; cursor: pointer;" @click="handleCommandAcciones({ item: scope.row, action: 'DESACTIVAR' })" color="red">
@@ -234,7 +239,7 @@
 import Resource from '@/api/resource'
 import { Delete, Check, Plus, Tickets, Edit, Close } from '@element-plus/icons-vue'
 import { ElMessageBox, ElNotification } from 'element-plus'
-import { nextTick, onMounted, reactive, ref, markRaw, watch } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, markRaw, watch } from 'vue';
 import RonderoRequest from '@/api/publico/rondero';
 import { calcularAnchoDialog } from '@/utils/responsive';
 import { useAuthStore } from "@/stores/AuthStore";
@@ -260,6 +265,7 @@ const ronderoCarnetResource = new Resource('generar-carnet');
 const ronderoRequest = new RonderoRequest();
 const authStore = useAuthStore()
 const validPermision = authStore.validPermision
+const isSuperAdministrador = computed(() => authStore.roles.includes('SuperAdministrador'))
 
 const loading = ref(false);
 const openDialogCreate = ref(false);
@@ -573,7 +579,7 @@ const handleCommandAcciones = ({ item, action }) => {
       openDialogEdit.value = true;
     });
   }
-  else if (action == 'DELETE' && validPermision('pub.rondero.eliminar')) {
+  else if (action == 'DELETE' && isSuperAdministrador.value) {
     const msg = `¿Seguro que desea eliminar el registro?<br /><br />${item.persona.docIdentidad}`
     ElMessageBox.confirm(msg, 'Atención', {
       top: '5vh',
@@ -652,3 +658,4 @@ onMounted(() => {
   getLista();
 })
 </script>
+

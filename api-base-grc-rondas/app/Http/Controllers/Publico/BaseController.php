@@ -29,6 +29,10 @@ class BaseController extends Controller
     {
         try {
             $keyword = $request->keyword;
+            $regionId = $request->input('region_id');
+            $provinciaId = $request->input('provincia_id');
+            $distritoId = $request->input('distrito_id');
+            $sectorZonaId = $request->input('sector_zona_id');
 
             $bases = Base::with(['region', 'provincia', 'distrito', 'sector', 'admin'])
                 ->where('eliminado', false);
@@ -51,6 +55,26 @@ class BaseController extends Controller
                             $q->where('descripcion', 'ilike', '%' . $keyword . '%');
                         });
                 });
+            }
+
+            if (!empty($regionId)) {
+                $bases->where('region_id', $regionId);
+            }
+
+            if (!empty($provinciaId)) {
+                $bases->where('provincia_id', $provinciaId);
+            }
+
+            if (!empty($distritoId)) {
+                $bases->where('distrito_id', $distritoId);
+            }
+
+            if ($request->filled('sector_zona_id')) {
+                if ((string)$sectorZonaId === 'sin-sector') {
+                    $bases->whereNull('sector_zona_id');
+                } else {
+                    $bases->where('sector_zona_id', $sectorZonaId);
+                }
             }
 
             $bases = $bases->orderBy('id', 'desc');
@@ -271,6 +295,13 @@ class BaseController extends Controller
      */
     public function destroy(string $id)
     {
+        if (!auth()->check() || !auth()->user()->hasRole('SuperAdministrador')) {
+            return response()->json([
+                'state' => 'error',
+                'message' => 'Solo el SuperAdministrador puede eliminar bases'
+            ], Response::HTTP_FORBIDDEN);
+        }
+
         if (!auth()->user()->hasPermissionTo('pub.bases.eliminar', 'api')) {
             return response()->json([
                 'state' => 'error',
@@ -312,6 +343,102 @@ class BaseController extends Controller
                 'state' => 'error',
                 'message' => 'Base no encontrada'
             ], Response::HTTP_NOT_FOUND);
+        }
+    }
+
+    public function eliminarMasivo(Request $request)
+    {
+        if (!auth()->check() || !auth()->user()->hasRole('SuperAdministrador')) {
+            return response()->json([
+                'state' => 'error',
+                'message' => 'Solo el SuperAdministrador puede eliminar bases'
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        DB::beginTransaction();
+        try {
+            $keyword = $request->input('keyword');
+            $regionId = $request->input('region_id');
+            $provinciaId = $request->input('provincia_id');
+            $distritoId = $request->input('distrito_id');
+            $sectorZonaId = $request->input('sector_zona_id');
+            $usuario = Auth::user()->id;
+
+            $bases = Base::query()->where('eliminado', false);
+
+            if (!empty($keyword)) {
+                $bases->where(function ($query) use ($keyword) {
+                    $query->where('nombre_descripcion', 'ilike', '%' . $keyword . '%')
+                        ->orWhere('numero_partida_registral', 'ilike', '%' . $keyword . '%')
+                        ->orWhereHas('region', function ($q) use ($keyword) {
+                            $q->where('descripcion', 'ilike', '%' . $keyword . '%');
+                        })
+                        ->orWhereHas('provincia', function ($q) use ($keyword) {
+                            $q->where('descripcion', 'ilike', '%' . $keyword . '%');
+                        })
+                        ->orWhereHas('distrito', function ($q) use ($keyword) {
+                            $q->where('descripcion', 'ilike', '%' . $keyword . '%');
+                        })
+                        ->orWhereHas('sector', function ($q) use ($keyword) {
+                            $q->where('descripcion', 'ilike', '%' . $keyword . '%');
+                        });
+                });
+            }
+
+            if (!empty($regionId)) {
+                $bases->where('region_id', $regionId);
+            }
+
+            if (!empty($provinciaId)) {
+                $bases->where('provincia_id', $provinciaId);
+            }
+
+            if (!empty($distritoId)) {
+                $bases->where('distrito_id', $distritoId);
+            }
+
+            if ($request->filled('sector_zona_id')) {
+                if ((string)$sectorZonaId === 'sin-sector') {
+                    $bases->whereNull('sector_zona_id');
+                } else {
+                    $bases->where('sector_zona_id', $sectorZonaId);
+                }
+            }
+
+            $ids = $bases->pluck('id');
+            $eliminados = $ids->count();
+
+            if ($eliminados === 0) {
+                DB::rollBack();
+                return response()->json([
+                    'state' => 'error',
+                    'message' => 'No hay bases para eliminar con los filtros actuales'
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            Base::whereIn('id', $ids)->update([
+                'eliminado' => true,
+                'deleted_by' => $usuario,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'state' => 'success',
+                'message' => 'Bases eliminadas correctamente',
+                'deleted_count' => $eliminados,
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error en BaseController@eliminarMasivo', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+            ]);
+
+            return response()->json([
+                'state' => 'error',
+                'message' => 'Error al eliminar bases de forma masiva'
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

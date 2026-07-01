@@ -65,6 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // BASES
     // ==========================================
     Route::resource('publico/bases', App\Http\Controllers\Publico\BaseController::class);
+    Route::post('publico/bases/eliminar-masivo', [App\Http\Controllers\Publico\BaseController::class, 'eliminarMasivo']);
     Route::get('publico/bases/ronderos', [App\Http\Controllers\Publico\BaseController::class, 'getRonderosByBase']);
     Route::get('publico/distritos/{id}/getSectores', [App\Http\Controllers\Publico\DistritoController::class, 'getSectores']);
     Route::get('publico/bases/distrito/{distrito_id}/bases', [App\Http\Controllers\Publico\BaseController::class, 'getBasesPorDistrito']);
@@ -77,6 +78,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::resource('publico/provincias', App\Http\Controllers\Publico\ProvinciaController::class);
     Route::resource('publico/distritos', App\Http\Controllers\Publico\DistritoController::class);
     Route::resource('publico/sectores', App\Http\Controllers\Publico\SectorController::class);
+    Route::post('publico/sectores/eliminar-masivo', [App\Http\Controllers\Publico\SectorController::class, 'eliminarMasivo']);
     Route::resource('publico/cargos', App\Http\Controllers\Publico\CargoController::class);
     Route::resource('publico/conflictos', App\Http\Controllers\Publico\ConflictoController::class);
     Route::resource('publico/turnos', App\Http\Controllers\Publico\TurnoController::class);

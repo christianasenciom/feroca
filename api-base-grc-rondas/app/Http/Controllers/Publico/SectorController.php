@@ -12,14 +12,18 @@ use App\Http\Resources\Publico\SectorResource;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Auth;
+use Exception;
 
 class SectorController extends Controller
 {
     public function index(Request $request)
     {
         $keyword = $request->keyword;
+        $regionId = $request->input('region_id');
+        $provinciaId = $request->input('provincia_id');
+        $distritoId = $request->input('distrito_id');
 
-        $sectores = Sector::with('distrito')
+        $sectores = Sector::with('distrito.provincia.region')
             ->where(function ($query) use ($keyword) {
                 if($keyword != '' && $keyword != null) {
                     $query->where('descripcion','ilike','%'.$keyword.'%')
@@ -28,6 +32,22 @@ class SectorController extends Controller
                           });
                 }
             })->where('eliminado', false);
+
+        if (!empty($regionId)) {
+            $sectores->whereHas('distrito.provincia', function ($q) use ($regionId) {
+                $q->where('region_id', $regionId);
+            });
+        }
+
+        if (!empty($provinciaId)) {
+            $sectores->whereHas('distrito', function ($q) use ($provinciaId) {
+                $q->where('provincia_id', $provinciaId);
+            });
+        }
+
+        if (!empty($distritoId)) {
+            $sectores->where('distrito_id', $distritoId);
+        }
 
         $sectores = $sectores->orderBy('id', 'desc');
 
@@ -46,7 +66,7 @@ class SectorController extends Controller
             $sector_existe = Sector::where('descripcion', $request->input('descripcion'))
                                    ->where('distrito_id', $request->input('distrito_id'))
                                    ->exists();
-            
+
             if($sector_existe) {
                 return response()->json([
                     'state' => 'error',
@@ -93,33 +113,33 @@ class SectorController extends Controller
     {
         try {
             DB::beginTransaction();
-            
+
             // Actualizar SECTOR
             $sector = Sector::query()->where('id','=',$id)->where('eliminado',false)->first();
-            
+
             if($sector) {
                 // Verificar si ya existe otro sector con la misma descripción en el mismo distrito
                 $existeDuplicado = Sector::where('descripcion', $request->input('descripcion'))
                                         ->where('distrito_id', $request->input('distrito_id'))
                                         ->where('id', '!=', $id)
                                         ->exists();
-                
+
                 if($existeDuplicado) {
                     return response()->json([
                         'state' => 'error',
                         'message' => 'Ya existe un sector con la descripción ' . $request->input('descripcion') . ' en este distrito'
                     ], Response::HTTP_BAD_REQUEST);
                 }
-                
+
                 $sector->descripcion = $request->input('descripcion');
                 $sector->distrito_id = $request->input('distrito_id');
                 $sector->save();
-                
+
                 DB::commit();
-                
+
                 // Cargar relación para el response
                 $sector->load('distrito');
-                
+
                 $response = [
                     "state" => "success",
                     "message" => "El registro se actualizó correctamente.",
@@ -149,6 +169,13 @@ class SectorController extends Controller
      */
     public function destroy(string $id)
     {
+        if (!auth()->check() || !auth()->user()->hasRole('SuperAdministrador')) {
+            return response()->json([
+                'state' => 'error',
+                'message' => 'Solo el SuperAdministrador puede eliminar sectores'
+            ], Response::HTTP_FORBIDDEN);
+        }
+
         if (!auth()->user()->hasPermissionTo('pub.sectores.eliminar', 'api')) {
             return response()->json([
                 'state' => 'error',
@@ -158,7 +185,7 @@ class SectorController extends Controller
 
         $usuario = Auth::user()->id;
         $sector = Sector::query()->find($id);
-        
+
         if ($sector) {
             DB::beginTransaction();
             try {
@@ -166,20 +193,20 @@ class SectorController extends Controller
                 $basesCount = Base::where('sector_zona_id', $id)
                                  ->where('eliminado', false)
                                  ->count();
-                
+
                 if ($basesCount > 0) {
                     return response()->json([
                         'state' => 'error',
                         'message' => 'No se puede eliminar el sector porque tiene bases asociadas'
                     ], Response::HTTP_BAD_REQUEST);
                 }
-                
+
                 $sector->eliminado = true;
                 $sector->deleted_by = $usuario;
                 $sector->save();
-                
+
                 DB::commit();
-                
+
                 return response()->json([
                     'state' => 'success',
                     'message' => 'Sector eliminado correctamente'
@@ -200,6 +227,100 @@ class SectorController extends Controller
         }
     }
 
+    public function eliminarMasivo(Request $request)
+    {
+        if (!auth()->check() || !auth()->user()->hasRole('SuperAdministrador')) {
+            return response()->json([
+                'state' => 'error',
+                'message' => 'Solo el SuperAdministrador puede eliminar sectores'
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        DB::beginTransaction();
+        try {
+            $keyword = $request->input('keyword');
+            $regionId = $request->input('region_id');
+            $provinciaId = $request->input('provincia_id');
+            $distritoId = $request->input('distrito_id');
+            $usuario = Auth::user()->id;
+
+            $sectores = Sector::query()->where('eliminado', false);
+
+            if (!empty($keyword)) {
+                $sectores->where(function ($query) use ($keyword) {
+                    $query->where('descripcion','ilike','%'.$keyword.'%')
+                        ->orWhereHas('distrito', function ($q) use ($keyword) {
+                            $q->where('descripcion', 'ilike', '%'.$keyword.'%');
+                        });
+                });
+            }
+
+            if (!empty($regionId)) {
+                $sectores->whereHas('distrito.provincia', function ($q) use ($regionId) {
+                    $q->where('region_id', $regionId);
+                });
+            }
+
+            if (!empty($provinciaId)) {
+                $sectores->whereHas('distrito', function ($q) use ($provinciaId) {
+                    $q->where('provincia_id', $provinciaId);
+                });
+            }
+
+            if (!empty($distritoId)) {
+                $sectores->where('distrito_id', $distritoId);
+            }
+
+            $ids = $sectores->pluck('id');
+
+            if ($ids->isEmpty()) {
+                DB::rollBack();
+                return response()->json([
+                    'state' => 'error',
+                    'message' => 'No hay sectores para eliminar con los filtros actuales'
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            $basesCount = Base::whereIn('sector_zona_id', $ids)
+                ->where('eliminado', false)
+                ->count();
+
+            if ($basesCount > 0) {
+                DB::rollBack();
+                return response()->json([
+                    'state' => 'error',
+                    'message' => 'No se puede eliminar masivamente porque hay sectores con bases asociadas'
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            $eliminados = $ids->count();
+
+            Sector::whereIn('id', $ids)->update([
+                'eliminado' => true,
+                'deleted_by' => $usuario,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'state' => 'success',
+                'message' => 'Sectores eliminados correctamente',
+                'deleted_count' => $eliminados,
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error en SectorController@eliminarMasivo', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+            ]);
+
+            return response()->json([
+                'state' => 'error',
+                'message' => 'Error al eliminar sectores de forma masiva'
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     public function activar($id)
     {
         if (!auth()->user()->hasPermissionTo('pub.sectores.activar', 'api')) {
@@ -217,10 +338,10 @@ class SectorController extends Controller
                 $sector->estado = true;
                 $sector->save();
                 DB::commit();
-                
+
                 // Cargar relación para el response
                 $sector->load('distrito');
-                
+
                 return response()->json([
                     'state' => 'success',
                     'message' => 'Registro activado',
@@ -259,10 +380,10 @@ class SectorController extends Controller
                 $sector->estado = false;
                 $sector->save();
                 DB::commit();
-                
+
                 // Cargar relación para el response
                 $sector->load('distrito');
-                
+
                 return response()->json([
                     'state' => 'success',
                     'message' => 'Registro desactivado',
@@ -291,7 +412,7 @@ class SectorController extends Controller
                     ->where('eliminado', false)
                     ->where('estado', true)
                     ->get();
-        
+
         return response()->json($bases, Response::HTTP_OK);
     }
 
@@ -304,7 +425,7 @@ class SectorController extends Controller
                          ->where('estado', true)
                          ->where('eliminado', false)
                          ->get(['id', 'descripcion']);
-        
+
         return response()->json($sectores, Response::HTTP_OK);
     }
 }
