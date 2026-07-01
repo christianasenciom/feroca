@@ -50,7 +50,7 @@ class AuditoriaController extends Controller
                 ], Response::HTTP_FORBIDDEN);
             }
 
-            $query = Auditoria::with(['usuario', 'rondero.persona', 'region', 'provincia', 'distrito', 'sector', 'base'])
+            $query = Auditoria::with(['usuario:id,name'])
                 ->orderBy('created_at', 'desc');
 
             $query = $this->aplicarVisibilidadPorRol($query, $usuario);
@@ -98,7 +98,9 @@ class AuditoriaController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error en index auditoría: ' . $e->getMessage());
+            Log::error('Error en index auditoría: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
             return response()->json([
                 'data' => [],
                 'meta' => ['total' => 0]
