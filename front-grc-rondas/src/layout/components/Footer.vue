@@ -5,7 +5,7 @@
         <span>Copyright CAAM © 2025 Gobierno Regional Cajamarca. Todos los derechos reservados</span>
       </div>
       <div class="footer-developer">
-        <span>Desarrollo: DRTD</span>
+        <span>FEROCA V2.1.0</span>
       </div>
     </div>
   </footer>

@@ -5,6 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ce372d22-c1d4-4e96-85fe-586e42545805" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/BaseController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/BaseController.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/RonderoController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/RonderoController.php" afterDir="false" />
@@ -254,7 +255,7 @@
       <workItem from="1778260080479" duration="26416000" />
       <workItem from="1778779977837" duration="405000" />
       <workItem from="1779209173690" duration="6576000" />
-      <workItem from="1782823276682" duration="12864000" />
+      <workItem from="1782823276682" duration="13185000" />
     </task>
     <servers />
   </component>
