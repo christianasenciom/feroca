@@ -680,4 +680,53 @@ class BaseController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    /**
+     * Obtener bases por sector.
+     * Incluye también bases sin sector del mismo distrito para cubrir casos
+     * donde algunas bases fueron registradas directamente sin sector.
+     */
+    public function getBases($id)
+    {
+        try {
+            $sector = Sector::where('id', $id)
+                ->where('estado', true)
+                ->where('eliminado', false)
+                ->first();
+
+            if (!$sector) {
+                return response()->json([
+                    'state' => 'error',
+                    'message' => 'Sector no encontrado o inactivo'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $bases = Base::with(['region', 'provincia', 'distrito', 'sector', 'admin'])
+                ->where('eliminado', false)
+                ->where('estado', true)
+                ->where(function ($query) use ($id, $sector) {
+                    $query->where('sector_zona_id', $id)
+                        ->orWhere(function ($subQuery) use ($sector) {
+                            $subQuery->whereNull('sector_zona_id')
+                                ->where('distrito_id', $sector->distrito_id);
+                        });
+                })
+                ->orderBy('nombre_descripcion')
+                ->get();
+
+            return BaseResource::collection($bases);
+        } catch (Exception $e) {
+            Log::error('Error en BaseController@getBases:', [
+                'sector_id' => $id,
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+
+            return response()->json([
+                'state' => 'error',
+                'message' => 'Error al obtener bases por sector'
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }

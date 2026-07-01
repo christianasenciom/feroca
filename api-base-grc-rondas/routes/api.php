@@ -21,7 +21,7 @@ Route::post('auth/signin', [WebAuthController::class, 'SignIn']);
 Route::get('validar-qr/{qr}', [QRController::class, 'validarQr']);
 
 // Rutas protegidas
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'auditoria.movimientos'])->group(function () {
 
     // ==========================================
     // AUTH
@@ -106,8 +106,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     // AUDITORÍA
     // ==========================================
+    Route::get('admin/dashboard/estadisticas', [App\Http\Controllers\Admin\DashboardController::class, 'estadisticas']);
     Route::get('admin/auditoria', [App\Http\Controllers\Admin\AuditoriaController::class, 'index']);
     Route::get('admin/auditoria/estadisticas', [App\Http\Controllers\Admin\AuditoriaController::class, 'estadisticas']);
+    Route::delete('admin/auditoria/limpiar-todo', [App\Http\Controllers\Admin\AuditoriaController::class, 'limpiarTodo']);
 
     // ==========================================
     // CONFIGURACIONES (solo SuperAdministrador)

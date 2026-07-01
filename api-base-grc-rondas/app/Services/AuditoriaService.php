@@ -10,6 +10,19 @@ use Illuminate\Support\Facades\Log;
 
 class AuditoriaService
 {
+    public static function registrarMovimiento(array $meta, bool $exitoso = true)
+    {
+        $descripcion = $meta['accion'] ?? $meta['ruta'] ?? 'movimiento';
+
+        return self::registrar([
+            'tipo_consulta' => 'movimiento',
+            'dni_consultado' => null,
+            'nombre_consultado' => $descripcion,
+            'datos_consulta' => $meta,
+            'encontrado' => $exitoso,
+        ]);
+    }
+
     public static function registrarConsultaReniec($dni, $datos, $encontrado = true)
     {
         Log::info('📝 [RENIEC] Iniciando registro de auditoría', [
