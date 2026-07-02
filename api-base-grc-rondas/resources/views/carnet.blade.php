@@ -137,12 +137,12 @@
                         <br>
                         <strong style="font-size: 10px">
                             @forelse($cargos ?? [] as $cargo)
-                                {{ $cargo }}
+                                CARGO: {{ $cargo }}
                                 @unless($loop->last)
                                     <br>
                                 @endunless
                             @empty
-                                RONDERO
+                               CARGO: RONDERO
                             @endforelse
                         </strong>
                         <br>

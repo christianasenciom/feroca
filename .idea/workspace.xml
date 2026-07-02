@@ -5,18 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ce372d22-c1d4-4e96-85fe-586e42545805" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/copilotDiffState.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/config/cors.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/config/cors.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/resources/views/carnet.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/resources/views/carnet.blade.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/storage/framework/views/4b280f6a44434abee1d04837deba6307.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/storage/framework/views/6ada558efd20073f6b4706f9a69c675b.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/storage/framework/views/e5e1f76342700a7885f23be5e2a02098.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/front-grc-rondas/.env.production" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/.env.production" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/auditoria/AuditoriaView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/auditoria/AuditoriaView.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/RonderosView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/RonderosView.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/dashboard/DashboardView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/dashboard/DashboardView.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/front-grc-rondas/vite.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/vite.config.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -269,7 +259,8 @@
       <workItem from="1779209173690" duration="6576000" />
       <workItem from="1782823276682" duration="21328000" />
       <workItem from="1783014804278" duration="1044000" />
-      <workItem from="1783020624978" duration="6972000" />
+      <workItem from="1783020624978" duration="7835000" />
+      <workItem from="1783028893172" duration="116000" />
     </task>
     <servers />
   </component>
