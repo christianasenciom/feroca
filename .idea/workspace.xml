@@ -5,21 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ce372d22-c1d4-4e96-85fe-586e42545805" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/copilotDiffState.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/BaseController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/BaseController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/RonderoController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/RonderoController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/SectorController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/SectorController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/config/dompdf.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/config/dompdf.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/config/filesystems.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/config/filesystems.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/config/cors.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/config/cors.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/resources/views/carnet.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/resources/views/carnet.blade.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/routes/api.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/routes/api.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/api/publico/base.js" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/api/publico/base.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/api/publico/sector.js" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/api/publico/sector.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/bases/BasesView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/bases/BasesView.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/storage/framework/views/4b280f6a44434abee1d04837deba6307.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/storage/framework/views/6ada558efd20073f6b4706f9a69c675b.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/storage/framework/views/e5e1f76342700a7885f23be5e2a02098.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/front-grc-rondas/.env.production" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/.env.production" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/auditoria/AuditoriaView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/auditoria/AuditoriaView.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/RonderosView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/RonderosView.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/components/EditRondero.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/ronderos/components/EditRondero.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/sectores/SectoresView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/sectores/SectoresView.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/dashboard/DashboardView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/dashboard/DashboardView.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/front-grc-rondas/vite.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/vite.config.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -52,12 +49,12 @@
     &quot;assignee&quot;: &quot;christianasenciom&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/christianasenciom/feroca.git",
-    "accountId": "142fcd77-f7db-4487-886e-aff46283ad2e"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/christianasenciom/feroca.git&quot;,
+    &quot;accountId&quot;: &quot;142fcd77-f7db-4487-886e-aff46283ad2e&quot;
   }
-}]]></component>
+}</component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../bin/php/php-8.1.10-Win32-vs16-x64/php.exe">
     <include_path>
       <path value="$PROJECT_DIR$/api-base-grc-rondas/vendor/bacon/bacon-qr-code" />
@@ -202,34 +199,49 @@
   &quot;associatedIndex&quot;: 7
 }</component>
   <component name="ProjectId" id="3DK20l1qVvFg3lGnE9JH9TZOMiO" />
+  <component name="ProjectSessionTemplates">
+    <option name="panelTemplate">
+      <template>
+        <option name="modeId" value="Ask" />
+        <option name="model">
+          <model>
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="auto" />
+          </model>
+        </option>
+        <option name="targetType" value="LOCAL" />
+      </template>
+    </option>
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "C:/xampp/htdocs/feroca",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "prettierjs.PrettierConfiguration.Package": "C:\\laragon\\www\\feroca\\front-grc-rondas\\node_modules\\prettier",
-    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\PhpStorm 2025.2\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/xampp/htdocs/feroca&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;prettierjs.PrettierConfiguration.Package&quot;: &quot;C:\\laragon\\www\\feroca\\front-grc-rondas\\node_modules\\prettier&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.github.copilot.settings.chat.ChatConfigurable&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Program Files\\JetBrains\\PhpStorm 2025.2\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "vue.recent.templates": [
-      "Vue Composition API Component"
+  &quot;keyToStringList&quot;: {
+    &quot;vue.recent.templates&quot;: [
+      &quot;Vue Composition API Component&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="Main" type="PHPUnitRunConfigurationType" factoryName="PHPUnit">
       <TestRunner configuration_file="$PROJECT_DIR$/api-base-grc-rondas/phpunit.xml" scope="XML" use_alternative_configuration_file="true" />
@@ -255,7 +267,9 @@
       <workItem from="1778260080479" duration="26416000" />
       <workItem from="1778779977837" duration="405000" />
       <workItem from="1779209173690" duration="6576000" />
-      <workItem from="1782823276682" duration="13185000" />
+      <workItem from="1782823276682" duration="21328000" />
+      <workItem from="1783014804278" duration="1044000" />
+      <workItem from="1783020624978" duration="6972000" />
     </task>
     <servers />
   </component>

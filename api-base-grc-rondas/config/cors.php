@@ -15,17 +15,21 @@ return [
     |
     */
 
-    'paths' => ['api/*', '/*','sanctum/csrf-cookie', 'api/web/*'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'auth/*'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => [
+        env('APP_ENV') === 'production'
+            ? env('APP_URL', '*')
+            : '*'
+    ],
 
     'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
+    'exposed_headers' => ['Authorization'],
 
     'max_age' => 0,
 

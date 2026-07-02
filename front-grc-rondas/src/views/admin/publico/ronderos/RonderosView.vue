@@ -106,7 +106,7 @@
             placeholder="Base"
             clearable
             filterable
-            :disabled="!query.sector_zona_id"
+            :disabled="!query.distrito_id"
             @change="getLista"
             style="width: 100%"
         >
@@ -436,26 +436,41 @@ const cargarDistritos = async () => {
 const cargarSectores = async () => {
   if (!query.distrito_id) {
     opcionesSectores.value = [];
+    opcionesBases.value = [];
     return;
   }
   try {
     const sectores = await sectorResource.getSectores(query.distrito_id);
     opcionesSectores.value = sectores || [];
+
+    // Si todavía no hay sector seleccionado, mostrar bases del distrito
+    if (!query.sector_zona_id) {
+      await cargarBases();
+    }
   } catch (error) {
     console.error('Error cargando sectores:', error);
     opcionesSectores.value = [];
+    opcionesBases.value = [];
   }
 };
 
 // Cargar bases según sector seleccionado
 const cargarBases = async () => {
-  if (!query.sector_zona_id) {
+  const tieneDistrito = query.distrito_id && query.distrito_id !== '' && query.distrito_id !== 0;
+  const tieneSector = query.sector_zona_id && query.sector_zona_id !== '' && query.sector_zona_id !== 0;
+
+  if (!tieneDistrito && !tieneSector) {
     opcionesBases.value = [];
     return;
   }
+
   try {
-    const basesData = await baseResource.getBases(query.sector_zona_id);
-    opcionesBases.value = basesData || [];
+    const basesData = tieneSector
+      ? await baseResource.getBases(query.sector_zona_id)
+      : await baseResource.getBasesPorDistrito(query.distrito_id);
+
+    const payload = basesData?.data ?? basesData;
+    opcionesBases.value = Array.isArray(payload) ? payload : [];
   } catch (error) {
     console.error('Error cargando bases:', error);
     opcionesBases.value = [];
@@ -658,4 +673,5 @@ onMounted(() => {
   getLista();
 })
 </script>
+
 

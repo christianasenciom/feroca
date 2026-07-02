@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Carnet Rondero</title>
     <style>
         @page {
             size: 8.44cm 14.5cm;
@@ -100,15 +99,15 @@
             <table style="width: 100%;">
                 <tr>
                     <td style="width: 20%; text-align: left;">
-                        <img src="file://{{ public_path('images/feroca_logo.png') }}" style="width: 0.9cm; height: 0.9cm;" alt="">
+                        <img src="file://{{ public_path('images/feroca_logo.png') }}" style="width: 1.7cm; height: 1.7cm;" alt="">
                     </td>
                     <td style="width: 60%; text-align: center;">
-                        <strong class="titulo-feroca">FEDERACIÓN REGIONAL DE RONDAS<br>CAMPESINAS DE CAJAMARCA</strong>
+                        <strong class="titulo-feroca">FEDERACIÓN REGIONAL DE <br> RONDAS CAMPESINAS <br> DE CAJAMARCA</strong>
                         <br>
                         <small class="subtitulo-feroca">LEY N° 27908 - D.S 025 - REG. N° 027</small>
                     </td>
                     <td style="width: 20%; text-align: right;">
-                        <img src="file://{{ public_path('images/cunarc_logo.png') }}" style="width: 0.9cm; height: 0.9cm;" alt="">
+                        <img src="file://{{ public_path('images/cunarc_logo.png') }}" style="width: 1.7cm; height: 1.7cm;" alt="">
                     </td>
                 </tr>
             </table>
