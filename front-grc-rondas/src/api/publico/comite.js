@@ -21,8 +21,18 @@ class ComiteResource extends Resource {
   getAvailableCargos(params) {
     return request({
       url: '/publico/comites/cargos_validos',
+      method: 'post',
+      data: params
+    })
+  }
+
+  /**
+   * Retorna todos los cargos activos sin filtrar por entidad/fecha (para el selector libre).
+   */
+  getAllCargos() {
+    return request({
+      url: '/publico/comites/all-cargos',
       method: 'get',
-      params: params
     })
   }
   

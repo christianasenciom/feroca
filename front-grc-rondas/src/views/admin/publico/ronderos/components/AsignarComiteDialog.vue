@@ -6,14 +6,14 @@
         :width="calcularAnchoDialog('45%','98%')"
         @close="closeDialog"
     >
-      <el-form ref="asignarComiteForm" :rules="rules" label-position="top" v-on:submit.prevent>
+      <el-form ref="asignarComiteForm" :model="formModel" :rules="rules" label-position="top" v-on:submit.prevent>
         <el-row :gutter="12">
           <el-col :xs="24">
             <!-- Paso 1: Seleccionar tipo de entidad -->
             <el-form-item label="Entidad" prop="comiteable_type">
               <el-select 
-                v-model="selectedComiteableType" 
-                @change="onComiteableTypeChange" 
+                v-model="formModel.comiteable_type"
+                @change="onComiteableTypeChange"
                 placeholder="Seleccione un tipo de entidad"
                 clearable
               >
@@ -28,7 +28,7 @@
             <!-- Paso 2: Seleccionar la entidad específica -->
             <el-form-item :label="'Seleccionar ' + selectedComiteableTypeLabel" prop="comiteable_id">
               <el-select
-                  v-model="selectedComiteableId"
+                  v-model="formModel.comiteable_id"
                   filterable
                   :options="comiteables"
                   placeholder="Seleccione una opción"
@@ -50,8 +50,8 @@
               <el-col :span="12">
                 <el-form-item label="Fecha inicio" prop="fecha_inicio">
                   <el-date-picker 
-                    v-model="fecha_inicio" 
-                    type="date" 
+                    v-model="formModel.fecha_inicio"
+                    type="date"
                     placeholder="Seleccione una fecha" 
                     format="DD/MM/YYYY" 
                     value-format="YYYY-MM-DD"
@@ -63,8 +63,8 @@
               <el-col :span="12">
                 <el-form-item label="Fecha fin" prop="fecha_fin">
                   <el-date-picker 
-                    v-model="fecha_fin" 
-                    type="date" 
+                    v-model="formModel.fecha_fin"
+                    type="date"
                     placeholder="Seleccione una fecha" 
                     format="DD/MM/YYYY" 
                     value-format="YYYY-MM-DD"
@@ -78,13 +78,12 @@
             <!-- Paso 4: Seleccionar cargo -->
             <el-form-item label="Cargo" prop="cargo_id">
               <el-select
-                  v-model="selectedCargo"
+                  v-model="formModel.cargo_id"
                   filterable
                   :options="cargos"
                   placeholder="Seleccione un cargo"
                   clearable
                   :loading="cargandoCargos"
-                  :disabled="!selectedComiteableId || !fecha_inicio || !fecha_fin"
               >
                 <el-option 
                   v-for="item in cargos" 
@@ -94,7 +93,7 @@
                 />
                 <template #empty>
                   <div style="text-align: center; padding: 10px;">
-                    {{ cargandoCargos ? 'Cargando...' : 'No hay cargos disponibles para este período' }}
+                    {{ cargandoCargos ? 'Cargando...' : 'No hay cargos registrados' }}
                   </div>
                 </template>
               </el-select>
@@ -105,7 +104,7 @@
 
       <template #footer>
         <el-button @click="closeDialog">Cancelar</el-button>
-        <el-button type="primary" @click="guardarComite" :loading="guardando" :disabled="!selectedCargo">
+        <el-button type="primary" @click="guardarComite" :loading="guardando" :disabled="!formModel.cargo_id">
           Guardar
         </el-button>
       </template>
@@ -131,16 +130,18 @@ export default {
     return {
       cargos: [],
       comiteables: [],
-      selectedCargo: null,
-      selectedComiteableType: '',
-      selectedComiteableId: null,
+      formModel: {
+        cargo_id: null,
+        comiteable_type: '',
+        comiteable_id: null,
+        fecha_inicio: null,
+        fecha_fin: null,
+      },
       dialogVisible: true,
       loading: false,
       guardando: false,
       cargandoCargos: false,
       cargandoComiteables: false,
-      fecha_inicio: null,
-      fecha_fin: null,
       rules: {
         comiteable_type: [
           { required: true, message: 'Por favor seleccione un tipo de entidad', trigger: 'change' },
@@ -162,7 +163,7 @@ export default {
   },
   computed: {
     selectedComiteableTypeLabel() {
-      switch (this.selectedComiteableType) {
+      switch (this.formModel.comiteable_type) {
         case 'App\\Models\\Publico\\Region': return 'Región';
         case 'App\\Models\\Publico\\Provincia': return 'Provincia';
         case 'App\\Models\\Publico\\Distrito': return 'Distrito';
@@ -183,121 +184,68 @@ export default {
       immediate: true
     }
   },
+  mounted() {
+    this.fetchAllCargos();
+  },
   methods: {
     calcularAnchoDialog,
-    
-    async onComiteableTypeChange() {
-      console.log('📌 Cambió tipo de entidad:', this.selectedComiteableType);
-      this.selectedComiteableId = null;
-      this.selectedCargo = null;
-      this.cargos = [];
-      this.fecha_inicio = null;
-      this.fecha_fin = null;
-      
-      if (this.selectedComiteableType && this.selectedComiteableType !== '') {
-        await this.fetchComiteables();
-      } else {
-        this.comiteables = [];
-      }
-    },
-    
-    async onComiteableChange() {
-      console.log('📌 Cambió entidad seleccionada:', this.selectedComiteableId);
-      this.selectedCargo = null;
-      this.cargos = [];
-      // No cargar cargos hasta que se seleccionen las fechas
-    },
-    
-    async onFechaChange() {
-      console.log('📌 Cambió fecha - inicio:', this.fecha_inicio, 'fin:', this.fecha_fin);
-      if (this.selectedComiteableId && this.fecha_inicio && this.fecha_fin) {
-        await this.fetchAvailableCargos();
-      }
-    },
-    
-    async fetchAvailableCargos() {
-      console.log('🔍 fetchAvailableCargos llamado');
-      console.log('  - selectedComiteableId:', this.selectedComiteableId);
-      console.log('  - selectedComiteableType:', this.selectedComiteableType);
-      console.log('  - fecha_inicio:', this.fecha_inicio);
-      console.log('  - fecha_fin:', this.fecha_fin);
-      
-      if (!this.selectedComiteableId || !this.selectedComiteableType) {
-        console.log('⚠️ Faltan datos obligatorios (entidad)');
-        this.cargos = [];
-        return;
-      }
-      
-      if (!this.fecha_inicio || !this.fecha_fin) {
-        console.log('⚠️ Faltan fechas');
-        this.cargos = [];
-        return;
-      }
-      
+
+    async fetchAllCargos() {
       this.cargandoCargos = true;
       try {
-        const payload = {
-          comiteable_id: this.selectedComiteableId,
-          comiteable_type: this.selectedComiteableType,
-          fecha_inicio: this.fecha_inicio,
-          fecha_fin: this.fecha_fin
-        };
-        
-        console.log('📤 Enviando payload:', payload);
-        
-        const response = await comiteResource.getAvailableCargos(payload);
-        
-        console.log('✅ Respuesta de getAvailableCargos:', response);
-        
-        let cargosData = [];
-        if (response && response.data && Array.isArray(response.data)) {
-          cargosData = response.data;
-        } else if (Array.isArray(response)) {
-          cargosData = response;
-        }
-        
-        this.cargos = cargosData.map((cargo) => ({
-          value: cargo.id,
-          label: cargo.descripcion,
-        }));
-        
-        console.log('📋 Cargos formateados:', this.cargos);
-        
-        if (this.cargos.length === 0) {
-          console.log('⚠️ No hay cargos disponibles para estos filtros');
-        }
+        const response = await comiteResource.getAllCargos();
+        // request.js devuelve el payload directo
+        const items = Array.isArray(response)
+          ? response
+          : (Array.isArray(response?.data) ? response.data : []);
+        this.cargos = items.map((c) => ({ value: c.id, label: c.descripcion }));
+        console.log('📋 Cargos cargados:', this.cargos.length);
       } catch (error) {
-        console.error('❌ Error fetching available cargos:', error);
-        console.error('Detalles:', error.response?.data);
+        console.error('❌ Error al cargar cargos:', error);
         this.cargos = [];
       } finally {
         this.cargandoCargos = false;
       }
     },
-    
+
+    async onComiteableTypeChange() {
+      console.log('📌 Cambió tipo de entidad:', this.formModel.comiteable_type);
+      this.formModel.comiteable_id = null;
+      this.formModel.fecha_inicio = null;
+      this.formModel.fecha_fin = null;
+      this.comiteables = [];
+
+      if (this.formModel.comiteable_type && this.formModel.comiteable_type !== '') {
+        await this.fetchComiteables();
+      }
+    },
+
+    async onComiteableChange() {
+      console.log('📌 Cambió entidad seleccionada:', this.formModel.comiteable_id);
+    },
+
+    async onFechaChange() {
+      // Las fechas ya no controlan el select de cargos
+    },
+
     async fetchComiteables() {
-      console.log('🔍 fetchComiteables llamado para tipo:', this.selectedComiteableType);
+      console.log('🔍 fetchComiteables para tipo:', this.formModel.comiteable_type);
       this.cargandoComiteables = true;
       try {
-        const response = await comiteResource.getComiteables(this.selectedComiteableType);
-        console.log('✅ Comiteables recibidos:', response);
-        
-        let comiteablesData = [];
-        if (response && response.data && Array.isArray(response.data)) {
-          comiteablesData = response.data;
-        } else if (Array.isArray(response)) {
-          comiteablesData = response;
-        }
-        
-        this.comiteables = comiteablesData.map((item) => ({
+        const response = await comiteResource.getComiteables(this.formModel.comiteable_type);
+        // request.js ya devuelve response.data (el payload directo)
+        const items = Array.isArray(response)
+          ? response
+          : (Array.isArray(response?.data) ? response.data : []);
+
+        this.comiteables = items.map((item) => ({
           value: item.id,
-          label: item.nombre_descripcion || item.descripcion || item.nombre,
+          label: item.nombre_descripcion || item.descripcion || item.nombre || `ID ${item.id}`,
         }));
-        
-        console.log('📋 Comiteables formateados:', this.comiteables);
+
+        console.log('📋 Comiteables cargados:', this.comiteables.length);
       } catch (error) {
         console.error('❌ Error fetching comiteables:', error);
-        console.error('Detalles:', error.response?.data);
         this.comiteables = [];
       } finally {
         this.cargandoComiteables = false;
@@ -305,29 +253,29 @@ export default {
     },
     
     resetForm() {
-      this.selectedCargo = null;
-      this.selectedComiteableType = '';
-      this.selectedComiteableId = null;
-      this.fecha_inicio = null;
-      this.fecha_fin = null;
-      this.cargos = [];
+      this.formModel.cargo_id = null;
+      this.formModel.comiteable_type = '';
+      this.formModel.comiteable_id = null;
+      this.formModel.fecha_inicio = null;
+      this.formModel.fecha_fin = null;
       this.comiteables = [];
+      // No limpiar this.cargos — ya están cargados al montar el componente
     },
     
     async guardarComite() {
-      if (!this.selectedCargo) {
+      if (!this.formModel.cargo_id) {
         this.$message.error('Por favor seleccione un cargo');
         return;
       }
-      if (!this.selectedComiteableId) {
+      if (!this.formModel.comiteable_id) {
         this.$message.error('Por favor seleccione una entidad');
         return;
       }
-      if (!this.fecha_inicio) {
+      if (!this.formModel.fecha_inicio) {
         this.$message.error('Por favor seleccione una fecha de inicio');
         return;
       }
-      if (!this.fecha_fin) {
+      if (!this.formModel.fecha_fin) {
         this.$message.error('Por favor seleccione una fecha de fin');
         return;
       }
@@ -336,11 +284,11 @@ export default {
       try {
         const payload = {
           rondero_id: this.ronderoId,
-          cargo_id: this.selectedCargo,
-          comiteable_id: this.selectedComiteableId,
-          comiteable_type: this.selectedComiteableType,
-          fecha_inicio: this.fecha_inicio,
-          fecha_fin: this.fecha_fin
+          cargo_id: this.formModel.cargo_id,
+          comiteable_id: this.formModel.comiteable_id,
+          comiteable_type: this.formModel.comiteable_type,
+          fecha_inicio: this.formModel.fecha_inicio,
+          fecha_fin: this.formModel.fecha_fin
         };
         
         console.log('📤 Guardando comité:', payload);
