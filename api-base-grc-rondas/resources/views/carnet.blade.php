@@ -135,16 +135,7 @@
                         <br>
                         <strong style="font-size: 12px">DNI: {{ $numero ?? '' }}</strong>
                         <br>
-                        <strong style="font-size: 10px">
-                            @forelse($cargos ?? [] as $cargo)
-                                CARGO: {{ $cargo }}
-                                @unless($loop->last)
-                                    <br>
-                                @endunless
-                            @empty
-                               CARGO: RONDERO
-                            @endforelse
-                        </strong>
+                        <strong style="font-size: 10px">Cargo: {{ $cargo ?? 'Rondero' }}</strong>
                         <br>
                         <strong style="font-size: 10px">Base: {{ $base ?? '' }}</strong>
                     </td>

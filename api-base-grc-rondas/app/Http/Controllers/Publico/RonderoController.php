@@ -816,15 +816,21 @@ private function generarCodigoRondero()
                 $data['nombres'] = $rondero->persona->nombres ?? '';
                 $data['numero'] = $rondero->persona->docIdentidad ?? '';
 
-                // Cargos
-                $data['cargos'] = [];
+                // Cargo para el carnet (el más reciente no eliminado).
+                $cargoActual = null;
                 if ($rondero->comites) {
-                    foreach ($rondero->comites as $comite) {
-                        if ($comite->cargo) {
-                            $data['cargos'][] = $comite->cargo->descripcion;
-                        }
+                    $comiteVigente = $rondero->comites
+                        ->filter(function ($comite) {
+                            return (int)($comite->eliminado ?? 0) === 0 && !empty($comite->cargo);
+                        })
+                        ->sortByDesc('fecha_inicio')
+                        ->first();
+
+                    if (!empty($comiteVigente) && !empty($comiteVigente->cargo)) {
+                        $cargoActual = $comiteVigente->cargo->descripcion;
                     }
                 }
+                $data['cargo'] = !empty($cargoActual) ? $cargoActual : 'Rondero';
 
                 // Ubicación
 

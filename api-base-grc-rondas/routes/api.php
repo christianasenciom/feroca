@@ -58,6 +58,14 @@ Route::middleware(['auth:sanctum', 'auditoria.movimientos'])->group(function () 
     Route::post('generar-carnet', [App\Http\Controllers\Publico\RonderoController::class, 'generarCarnet']);
     Route::get('publico/ronderos/{id}/foto', [App\Http\Controllers\Publico\RonderoController::class, 'getFoto']);
 
+    // Comités (asignación de cargo por entidad)
+    Route::get('publico/comites/getComiteables', [App\Http\Controllers\Publico\ComiteController::class, 'getComiteables']);
+    Route::get('publico/comites/all-cargos', [App\Http\Controllers\Publico\ComiteController::class, 'getAllCargos']);
+    Route::match(['get', 'post'], 'publico/comites/cargos_validos', [App\Http\Controllers\Publico\ComiteController::class, 'getAvailableCargos']);
+    Route::get('publico/comites/{id_rondero}/cargos', [App\Http\Controllers\Publico\ComiteController::class, 'getComitesByRondero']);
+    Route::resource('publico/comites', App\Http\Controllers\Publico\ComiteController::class)
+        ->only(['index', 'show', 'store', 'update', 'destroy']);
+
     // Ronderos potenciales administradores
     Route::get('publico/ronderos/potenciales-administradores', [App\Http\Controllers\Publico\RonderoController::class, 'potencialesAdministradores']);
 

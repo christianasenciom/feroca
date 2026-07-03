@@ -106,12 +106,14 @@ class ComiteController extends Controller
                 ]);
 
                 $allowedTypes = [
-                    'App\\Models\\Publico\\Region',
-                    'App\\Models\\Publico\\Provincia',
-                    'App\\Models\\Publico\\Distrito',
-                    'App\\Models\\Publico\\Sector',
-                    'App\\Models\\Publico\\Base'
+                    'App\Models\Publico\Region',
+                    'App\Models\Publico\Provincia',
+                    'App\Models\Publico\Distrito',
+                    'App\Models\Publico\Sector',
+                    'App\Models\Publico\Base',
                 ];
+
+                $validated['comiteable_type'] = str_replace('\\\\', '\\', $validated['comiteable_type']);
 
 
 
@@ -135,31 +137,127 @@ class ComiteController extends Controller
     {
         \Log::info('=== getComiteables llamado ===');
         \Log::info('Type recibido: ' . $request->input('type'));
-        
+
         try {
-            $type = $request->query('type'); 
-            
+            $type = $request->query('type');
+
+            // Normalizar: reemplazar doble barra por simple en caso de doble-encoding
+            $type = str_replace('\\\\', '\\', $type);
+
             $allowedTypes = [
-                'App\\Models\\Publico\\Region',
-                'App\\Models\\Publico\\Provincia', 
-                'App\\Models\\Publico\\Distrito',
-                'App\\Models\\Publico\\Sector',
-                'App\\Models\\Publico\\Base'
+                'App\Models\Publico\Region',
+                'App\Models\Publico\Provincia',
+                'App\Models\Publico\Distrito',
+                'App\Models\Publico\Sector',
+                'App\Models\Publico\Base',
             ];
-            
+
             if (!in_array($type, $allowedTypes)) {
                 \Log::error('Tipo no válido: ' . $type);
-                return response()->json(['error' => 'Tipo de entidad no válido'], 422);
+                return response()->json(['error' => 'Tipo de entidad no válido: ' . $type], 422);
             }
-            
-            $comiteables = $type::where('eliminado', false)->where('estado', true)->get();
-            \Log::info('Registros encontrados: ' . $comiteables->count());
-            
-            return response()->json($comiteables);
-            
+
+            switch ($type) {
+                case 'App\Models\Publico\Region':
+                    $items = \App\Models\Publico\Region::where('estado', true)
+                        ->orderBy('descripcion')
+                        ->get();
+                    $result = $items->map(fn ($r) => [
+                        'id'                => $r->id,
+                        'nombre_descripcion' => $r->descripcion,
+                    ]);
+                    break;
+
+                case 'App\Models\Publico\Provincia':
+                    $items = \App\Models\Publico\Provincia::with('region')
+                        ->where('eliminado', false)
+                        ->where('estado', true)
+                        ->orderBy('descripcion')
+                        ->get();
+                    $result = $items->map(fn ($p) => [
+                        'id'                => $p->id,
+                        'nombre_descripcion' => implode(' - ', array_filter([
+                            $p->region->descripcion ?? null,
+                            $p->descripcion,
+                        ])),
+                    ]);
+                    break;
+
+                case 'App\Models\Publico\Distrito':
+                    $items = \App\Models\Publico\Distrito::with(['provincia.region'])
+                        ->where('estado', true)
+                        ->orderBy('descripcion')
+                        ->get();
+                    $result = $items->map(fn ($d) => [
+                        'id'                => $d->id,
+                        'nombre_descripcion' => implode(' - ', array_filter([
+                            $d->provincia->region->descripcion ?? null,
+                            $d->provincia->descripcion ?? null,
+                            $d->descripcion,
+                        ])),
+                    ]);
+                    break;
+
+                case 'App\Models\Publico\Sector':
+                    $items = \App\Models\Publico\Sector::with(['distrito.provincia.region'])
+                        ->where('estado', true)
+                        ->orderBy('descripcion')
+                        ->get();
+                    $result = $items->map(fn ($s) => [
+                        'id'                => $s->id,
+                        'nombre_descripcion' => implode(' - ', array_filter([
+                            $s->distrito->provincia->region->descripcion ?? null,
+                            $s->distrito->provincia->descripcion ?? null,
+                            $s->distrito->descripcion ?? null,
+                            $s->descripcion,
+                        ])),
+                    ]);
+                    break;
+
+                case 'App\Models\Publico\Base':
+                    $items = \App\Models\Publico\Base::with(['region', 'provincia', 'distrito', 'sector'])
+                        ->where('estado', true)
+                        ->orderBy('nombre_descripcion')
+                        ->get();
+                    $result = $items->map(fn ($b) => [
+                        'id'                => $b->id,
+                        'nombre_descripcion' => implode(' - ', array_filter([
+                            $b->region->descripcion ?? null,
+                            $b->provincia->descripcion ?? null,
+                            $b->distrito->descripcion ?? null,
+                            $b->sector->descripcion ?? null,
+                            $b->nombre_descripcion,
+                        ])),
+                    ]);
+                    break;
+
+                default:
+                    $result = collect();
+            }
+
+            \Log::info('Registros encontrados: ' . $result->count());
+            return response()->json($result->values());
+
         } catch (\Exception $e) {
             \Log::error('Error en getComiteables: ' . $e->getMessage());
             \Log::error($e->getTraceAsString());
+            return response()->json(['error' => 'Error interno: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Retorna todos los cargos activos sin paginación (para el selector del modal).
+     */
+    public function getAllCargos()
+    {
+        try {
+            $cargos = \App\Models\Publico\Cargo::where('eliminado', false)
+                ->where('estado', true)
+                ->orderBy('descripcion')
+                ->get(['id', 'descripcion']);
+            return response()->json($cargos);
+        } catch (\Exception $e) {
+            \Log::error('Error en getAllCargos: ' . $e->getMessage());
             return response()->json(['error' => 'Error interno'], 500);
         }
     }
