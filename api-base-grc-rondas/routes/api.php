@@ -52,6 +52,9 @@ Route::middleware(['auth:sanctum', 'auditoria.movimientos'])->group(function () 
     // ==========================================
     // RONDEROS
     // ==========================================
+    // Ronderos potenciales administradores (DEBE ir antes del resource)
+    Route::get('publico/ronderos/potenciales-administradores', [App\Http\Controllers\Publico\RonderoController::class, 'potencialesAdministradores']);
+    
     Route::resource('publico/ronderos', App\Http\Controllers\Publico\RonderoController::class);
     Route::post('publico/ronderos/{id}/activar', [App\Http\Controllers\Publico\RonderoController::class, 'activar']);
     Route::post('publico/ronderos/{id}/desactivar', [App\Http\Controllers\Publico\RonderoController::class, 'inactivar']);
@@ -65,9 +68,6 @@ Route::middleware(['auth:sanctum', 'auditoria.movimientos'])->group(function () 
     Route::get('publico/comites/{id_rondero}/cargos', [App\Http\Controllers\Publico\ComiteController::class, 'getComitesByRondero']);
     Route::resource('publico/comites', App\Http\Controllers\Publico\ComiteController::class)
         ->only(['index', 'show', 'store', 'update', 'destroy']);
-
-    // Ronderos potenciales administradores
-    Route::get('publico/ronderos/potenciales-administradores', [App\Http\Controllers\Publico\RonderoController::class, 'potencialesAdministradores']);
 
     // ==========================================
     // BASES

@@ -55,8 +55,8 @@ class UserController extends Controller
         try {
 
             // Verificar si ya existe un superadministrador
-            $tieneSuperAdmin = Role::where('name', 'SuperAdministrador')->first()->users()->exists();
-            if ($tieneSuperAdmin && $request->input('role_id') == 1) {
+            $superAdminRole = Role::where('name', 'SuperAdministrador')->first();
+            if ($superAdminRole && $superAdminRole->users()->exists() && $request->input('role_id') == $superAdminRole->id) {
                 return response()->json([
                     'state' => 'error',
                     'message' => 'Ya existe un superadministrador, no se puede crear otro'
@@ -111,8 +111,15 @@ class UserController extends Controller
             $usuario->save();
 
             // Asignamos los roles seleccionados al usuario
-            $roles = Role::find($request->role_id);
-            $usuario->syncRoles($roles);
+            $role = Role::find($request->role_id);
+            if (!$role) {
+                DB::rollback();
+                return response()->json([
+                    'state' => 'error',
+                    'message' => 'El rol seleccionado no existe'
+                ], Response::HTTP_BAD_REQUEST);
+            }
+            $usuario->assignRole($role);
 
             // Finalizamos la transacción
             DB::commit();
@@ -122,8 +129,12 @@ class UserController extends Controller
             ], Response::HTTP_OK);
         } catch (Exception $e) {
             DB::rollback();
+            Log::error('Error al crear usuario: ' . $e->getMessage());
             Log::error($e);
-            return response()->json([],Response::HTTP_INTERNAL_SERVER_ERROR);
+            return response()->json([
+                'state' => 'error',
+                'message' => 'Error al crear usuario: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -148,14 +159,37 @@ class UserController extends Controller
             $persona = Persona::query()->findOrFail($usuario->persona_id);
 
             $persona->fecha_nacimiento = $request->input('persona.fecha_nacimiento');
+            $persona->genero = $request->input('persona.genero');
             $persona->direccion = $request->input('persona.direccion');
             $persona->celular = $request->input('persona.celular');
-            $persona->email = $request->email;
+            $persona->apellido_paterno = $request->input('persona.apellido_paterno');
+            $persona->apellido_materno = $request->input('persona.apellido_materno');
+            $persona->nombres = $request->input('persona.nombres');
+            
+            // Solo actualizar email si es diferente al actual
+            if ($request->email && $request->email !== $usuario->email) {
+                // Verificar si email ya está en uso por otro usuario
+                $emailExists = \App\Models\Base\User::where('email', $request->email)->where('id', '<>', $usuario->id)->exists();
+                if ($emailExists) {
+                    DB::rollback();
+                    return response()->json([
+                        'state' => 'error',
+                        'message' => 'El email proporcionado ya está en uso por otro usuario'
+                    ], Response::HTTP_BAD_REQUEST);
+                }
+
+                $persona->email = $request->email;
+            }
             $persona->save();
 
             // Actualizar USUARIO
             $usuario->name = $persona->docIdentidad;
-            $usuario->email = $persona->email;
+            
+            // Solo actualizar email del usuario si cambió
+            if ($request->email && $request->email !== $usuario->email) {
+                $usuario->email = $request->email;
+            }
+            
             if ($request->password != null){
                 $usuario->password = Hash::make($request->password);
             }

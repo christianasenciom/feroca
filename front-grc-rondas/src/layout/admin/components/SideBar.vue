@@ -46,18 +46,6 @@
                 <el-icon><Service /></el-icon>
                 <span>Servicios</span>
               </template>
-
-              <!-- Consulta RQ -->
-              <el-menu-item index="/consulta-rq/index" @click="navegarA('/consulta-rq/index')">
-                <el-icon><Search /></el-icon>
-                <span>Consulta RQ</span>
-              </el-menu-item>
-
-              <!-- Verificar Identidad -->
-              <el-menu-item index="/verificar-identidad/index" @click="navegarA('/verificar-identidad/index')">
-                <el-icon><UserFilled /></el-icon>
-                <span>Verificar Identidad</span>
-              </el-menu-item>
             </el-sub-menu>
 
             <!-- ==================== -->
@@ -103,7 +91,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore'
 import SidebarItem from './SidebarItem.vue'
 import { useAppStore } from '@/stores/AppStore'
-import { Service, Search, UserFilled, List, Document, Setting } from '@element-plus/icons-vue'
+import { Service, List, Document, Setting } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const isSmallScreen = ref(false)

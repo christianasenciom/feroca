@@ -205,46 +205,26 @@ export function resetRouter() {
 }
 
 router.beforeEach(
-  async (to, from, next) => {
+  (to, from, next) => {
     const authStore = useAuthStore()
+    console.log('[router] beforeEach ->', { to: to.path, from: from.path })
     document.title = getPageTitle(to.meta.title)
     authStore.changePageCurrentInfo(to.meta)
-
-    const requiereRoles = to.meta?.roles && to.meta.roles.length > 0
 
     if (getToken()) {
       if (to.path === '/signin') {
         next('/dashboard')
       } else {
-        if (authStore.getRoles && authStore.getRoles.length > 0) {
-          if (requiereRoles) {
-            const tieneRolPermitido = to.meta.roles.some(rol => authStore.getRoles.includes(rol))
-            if (!tieneRolPermitido) {
-              ElMessage.error('No tiene permiso para acceder a esta página')
-              next('/dashboard')
-              return
-            }
-          }
-          next()
-        } else {
-          try {
-            const { roles, permissions } = await authStore.userInfo()
-            if (roles.length === 0 && permissions.length === 0) {
-              await ElMessage({
-                message: 'No cuenta con roles asignados, por favor contacte al administrador del sistema.',
-                type: 'info'
-              })
+        // Always proceed immediately. Fetch user info/roles in background.
+        if (!authStore.getRoles || authStore.getRoles.length === 0) {
+          authStore.userInfo()
+            .then(({ roles, permissions }) => authStore.generateRoutes(roles, permissions))
+            .catch((err) => {
+              console.error('[router] background auth fetch failed:', err)
               removeToken()
-              next(`/signin`)
-            } else {
-              await authStore.generateRoutes(roles, permissions)
-              next({ ...to, replace: true })
-            }
-          } catch (error) {
-            console.log(error)
-            next(`/signin`)
-          }
+            })
         }
+        next()
       }
     } else {
       if (whiteList.indexOf(to.path) !== -1) {
@@ -253,8 +233,7 @@ router.beforeEach(
         next(`/signin`)
       }
     }
-  },
-  { once: true }
+  }
 )
 
 export default router

@@ -54,6 +54,8 @@ class UserRequest extends FormRequest
                     'persona.nombres' => 'required|string|max:255',
                     'persona.docIdentidad' => 'required|max:255',
                     'email' => 'required|email|max:255',
+                    'password' => 'required|string|min:6',
+                    'role_id' => 'required|exists:pgsql.auth.roles,id'
                 ];
                 break;
             case 'update':

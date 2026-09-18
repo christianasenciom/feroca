@@ -25,9 +25,12 @@ class User extends Authenticatable implements Authorizable
      */
     protected $table = 'auth.users';
     protected $fillable = [
+        'name',
         'email',
         'password',
-        'persona_id'
+        'persona_id',
+        'cambioPassword',
+        'eliminado'
     ];
 
     /**

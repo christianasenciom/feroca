@@ -349,7 +349,7 @@ import ProvinciaResource from '@/api/publico/provincia';
 import DistritoResource from '@/api/publico/distrito';
 import SectorResource from "@/api/publico/sector";
 import { isActionDisabled } from "@/utils/utils.js";
-import axios from 'axios';
+import request from '@/utils/request';
 
 export default {
   name: 'BasesView',
@@ -442,9 +442,8 @@ export default {
 
     const fetchAllRonderos = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
-        const response = await axios.get(`${apiUrl}/publico/ronderos/potenciales-administradores`);
-        const data = response.data.data || response.data;
+        const response = await request.get('/publico/ronderos/potenciales-administradores');
+        const data = response.data || response;
         if (data && Array.isArray(data) && data.length > 0) {
           detalleRonderos.value = data.map(item => ({
             id: item.id,

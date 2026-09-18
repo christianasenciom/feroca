@@ -42,22 +42,45 @@ class ComiteController extends Controller
 
     public function destroy(string $id)
     {
-
         try {
+            DB::beginTransaction();
 
             $comite = Comite::query()->findOrFail($id);
+            
+            // Obtener el cargo antes de eliminar el comité
+            $cargo = $comite->cargo;
+            
+            // Marcar el comité como eliminado
             $comite->eliminado = 1;
             $comite->deleted_by = auth()->user()->id;
             $comite->save();
+
+            // Desasignar el rol del usuario del rondero
+            if ($cargo && $comite->rondero) {
+                $rondero = $comite->rondero;
+                if ($rondero && $rondero->persona) {
+                    $user = $rondero->persona->user;
+                    if ($user) {
+                        // Desasignar el rol basado en el cargo (el nombre del cargo es el nombre del rol)
+                        $role = \App\Models\Role::where('name', $cargo->descripcion)->first();
+                        if ($role && $user->hasRole($role->name)) {
+                            $user->removeRole($role);
+                        }
+                    }
+                }
+            }
+
+            DB::commit();
 
             $response = [
                 "state" => "success",
                 "message" => "Registro eliminado",
             ];
-            return response()->json($response,Response::HTTP_OK);
+            return response()->json($response, Response::HTTP_OK);
         } catch (Exception $e) {
+            DB::rollback();
             Log::error($e);
-            return response()->json([],Response::HTTP_INTERNAL_SERVER_ERROR);
+            return response()->json([], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -95,7 +118,6 @@ class ComiteController extends Controller
 
             DB::beginTransaction();
 
-
                 $validated = $request->validate([
                     'rondero_id' => 'required|exists:rondero,id',
                     'cargo_id' => 'required|exists:cargo,id',
@@ -121,11 +143,32 @@ class ComiteController extends Controller
                     return response()->json(['error' => 'Tipo de entidad no válido.'], 422);
                 }
 
+                // Crear el comité
                 $comite = Comite::create($validated);
+
+                // Obtener el rondero y su usuario
+                $rondero = \App\Models\Publico\Rondero::with('persona')->findOrFail($validated['rondero_id']);
+                $cargo = \App\Models\Publico\Cargo::findOrFail($validated['cargo_id']);
+
+                // Si el rondero tiene persona y persona tiene usuario, asignar el rol
+                if ($rondero->persona && $rondero->persona->user_id) {
+                    $user = \App\Models\Base\User::find($rondero->persona->user_id);
+                    if ($user) {
+                        // Asignar el rol basado en el cargo (el nombre del cargo es el nombre del rol)
+                        $role = \App\Models\Role::where('name', $cargo->descripcion)->first();
+                        if ($role) {
+                            // Evitar duplicados
+                            if (!$user->hasRole($role->name)) {
+                                $user->assignRole($role);
+                            }
+                        }
+                    }
+                }
+
                 DB::commit();
                 return response()->json([
                     'state' => 'success',
-                    'message' => 'Distrito registrada correctamente',
+                    'message' => 'Comité registrado correctamente',
                 ], Response::HTTP_OK);
         } catch (Exception $e) {
             DB::rollback();

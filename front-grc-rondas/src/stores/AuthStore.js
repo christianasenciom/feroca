@@ -17,6 +17,7 @@ export const useAuthStore = defineStore('AuthStore', {
     userAccessRoutes: [],
     currentPageInfo: { title: null, icon: null },
     cambioPassword: false,
+    permissionsLoaded: false,
   }),
   getters: {
     getUser: (state) => state.email,
@@ -46,12 +47,22 @@ export const useAuthStore = defineStore('AuthStore', {
         this.setToken(token)
         setToken(token)
 
+        // Prefetch user info and routes to avoid heavy work during router navigation
+        try {
+          const { roles, permissions } = await this.userInfo()
+          await this.generateRoutes(roles, permissions)
+        } catch (err) {
+          // If prefetch fails, clear session and rethrow to let UI handle it
+          console.error('Prefetch user info failed:', err)
+        }
+
         return response
       } catch (error) {
         console.error('SignIn error:', error)
         throw error
       }
     },
+
 
     async userInfo() {
       try {
@@ -69,6 +80,7 @@ export const useAuthStore = defineStore('AuthStore', {
         this.avatar = avatar
         this.roles = roles
         this.permissions = permissions
+        this.permissionsLoaded = true
         return { roles, permissions }
       } catch (error) {
         this.resetSession()
@@ -94,21 +106,41 @@ export const useAuthStore = defineStore('AuthStore', {
       this.roles = []
       this.permissions = []
       this.userAccessRoutes = []
+      this.permissionsLoaded = false
       removeToken()
       resetRouter()
     },
 
     async generateRoutes(roles, permissions) {
-      let accessedRoutes
-      if (roles.includes('SuperAdministrador')) {
-        accessedRoutes = asyncRoutes || []
-      } else {
-        accessedRoutes = defineUserAccessRoutes(asyncRoutes, roles, permissions)
+      try {
+        console.log('[AuthStore] generateRoutes start', { roles, permissions })
+        const t0 = Date.now()
+        let accessedRoutes
+        if (roles.includes('SuperAdministrador')) {
+          accessedRoutes = asyncRoutes || []
+        } else {
+          accessedRoutes = defineUserAccessRoutes(asyncRoutes, roles, permissions)
+        }
+        const t1 = Date.now()
+        console.log('[AuthStore] computed accessedRoutes length', accessedRoutes.length, 'compute_ms', t1 - t0)
+
+        this.userAccessRoutes = routes.concat(accessedRoutes)
+        let added = 0
+        accessedRoutes.forEach((route) => {
+          try {
+            router.addRoute(route)
+            added++
+          } catch (e) {
+            console.error('[AuthStore] error adding route', route.name || route.path, e)
+          }
+        })
+        const t2 = Date.now()
+        console.log('[AuthStore] generateRoutes finished', { added, total: accessedRoutes.length, duration_ms: t2 - t0 })
+        return this.userAccessRoutes
+      } catch (e) {
+        console.error('[AuthStore] generateRoutes failed', e)
+        throw e
       }
-      this.userAccessRoutes = routes.concat(accessedRoutes)
-      accessedRoutes.forEach((route) => {
-        router.addRoute(route)
-      })
     },
 
     resetToken() {

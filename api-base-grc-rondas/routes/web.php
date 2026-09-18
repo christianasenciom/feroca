@@ -10,6 +10,11 @@ use App\Http\Controllers\Web\VerificacionController;
 |--------------------------------------------------------------------------
 */
 
+// Ruta CSRF (pública)
+Route::get('/sanctum/csrf-cookie', function () {
+    return response()->noContent();
+});
+
 Route::get('/login', function () {
     return redirect('/signin');
 })->name('login');

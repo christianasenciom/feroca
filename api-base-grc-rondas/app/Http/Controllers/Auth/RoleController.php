@@ -94,16 +94,31 @@ class RoleController extends Controller
 
     public function all() {
         return RoleResource::collection(Role::query()->where('name', '!=', 'SuperAdministrador')->get());
-//        return RoleResource::collection(Role::all());
     }
 
     public function syncRolePermissions(Request $request) {
+        // Verificar si el usuario autenticado tiene permiso
+        $user = auth()->user();
+        if (!$user || (!$user->hasPermissionTo('auth.roles.asignarpermisos', 'api') && !$user->hasRole('SuperAdministrador'))) {
+            return response()->json([
+                'message' => 'No tienes permiso para asignar permisos a roles',
+                'success' => false
+            ], Response::HTTP_FORBIDDEN);
+        }
+
         try {
             $role = Role::query()->findOrFail($request->role_id);
             $role->syncPermissions($request->permissions);
+            return response()->json([
+                'message' => 'Permisos sincronizados exitosamente',
+                'success' => true
+            ]);
         } catch (Exception $e) {
             Log::error($e);
-            return response()->json([],Response::HTTP_INTERNAL_SERVER_ERROR);
+            return response()->json([
+                'message' => 'Error al sincronizar permisos',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

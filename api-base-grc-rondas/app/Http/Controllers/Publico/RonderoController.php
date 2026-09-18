@@ -1304,11 +1304,48 @@ public function testFotoRondero($id)
             ], Response::HTTP_OK);
 
         } catch (\Exception $e) {
-            Log::error('Error en buscarPorDNI: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Obtener ronderos potenciales para ser administradores de bases
+     */
+    public function potencialesAdministradores(Request $request)
+    {
+        try {
+            // Retornar ronderos que tengan un cargo de Presidente o similar
+            $ronderos = Rondero::with(['persona', 'comites.cargo'])
+                ->where('eliminado', false)
+                ->where('estado', true)
+                ->whereHas('comites', function($query) {
+                    $query->whereHas('cargo', function($q) {
+                        $q->where('descripcion', 'ILIKE', '%PRESIDENTE%');
+                    });
+                })
+                ->orderBy('estado', 'desc')
+                ->get();
+
             return response()->json([
-                'success' => false,
-                'message' => 'Error al buscar: ' . $e->getMessage()
+                'data' => $ronderos->map(function ($rondero) {
+                    return [
+                        'id' => $rondero->id,
+                        'rondero_id' => $rondero->id,
+                        'persona_id' => $rondero->persona_id,
+                        'persona' => $rondero->persona,
+                        'docIdentidad' => $rondero->persona?->docIdentidad ?? '',
+                        'nombres' => $rondero->persona?->nombres ?? '',
+                        'apellido_paterno' => $rondero->persona?->apellido_paterno ?? '',
+                        'apellido_materno' => $rondero->persona?->apellido_materno ?? '',
+                    ];
+                })
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error en potencialesAdministradores: ' . $e->getMessage());
+            return response()->json([
+                'state' => 'error',
+                'message' => 'Error al obtener ronderos potenciales'
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
+

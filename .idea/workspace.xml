@@ -5,8 +5,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ce372d22-c1d4-4e96-85fe-586e42545805" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/copilotDiffState.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/resources/views/carnet.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/resources/views/carnet.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Auth/RoleController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Auth/RoleController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Auth/UserController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Auth/UserController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Auth/WebAuthController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Auth/WebAuthController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/ComiteController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/ComiteController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/RonderoController.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Controllers/Publico/RonderoController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Requests/Admin/UserRequest.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Requests/Admin/UserRequest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Resources/Auth/InfoUserAuthenticatedResource.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Http/Resources/Auth/InfoUserAuthenticatedResource.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/app/Models/Base/User.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/app/Models/Base/User.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/routes/api.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/routes/api.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-base-grc-rondas/routes/web.php" beforeDir="false" afterPath="$PROJECT_DIR$/api-base-grc-rondas/routes/web.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/layout/admin/components/SideBar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/layout/admin/components/SideBar.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/router/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/router/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/stores/AuthStore.js" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/stores/AuthStore.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/bases/BasesView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/admin/publico/bases/BasesView.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/front-grc-rondas/src/views/dashboard/DashboardView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/front-grc-rondas/src/views/dashboard/DashboardView.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -189,20 +204,6 @@
   &quot;associatedIndex&quot;: 7
 }</component>
   <component name="ProjectId" id="3DK20l1qVvFg3lGnE9JH9TZOMiO" />
-  <component name="ProjectSessionTemplates">
-    <option name="panelTemplate">
-      <template>
-        <option name="modeId" value="Ask" />
-        <option name="model">
-          <model>
-            <option name="modelType" value="builtin_family" />
-            <option name="modelValue" value="auto" />
-          </model>
-        </option>
-        <option name="targetType" value="LOCAL" />
-      </template>
-    </option>
-  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -260,7 +261,30 @@
       <workItem from="1782823276682" duration="21328000" />
       <workItem from="1783014804278" duration="1044000" />
       <workItem from="1783020624978" duration="7835000" />
-      <workItem from="1783028893172" duration="116000" />
+      <workItem from="1783028893172" duration="352000" />
+      <workItem from="1783084543124" duration="4810000" />
+      <workItem from="1783109091640" duration="131000" />
+      <workItem from="1785420889461" duration="10882000" />
+      <workItem from="1785500619622" duration="28000" />
+      <workItem from="1789417788672" duration="13000" />
+      <workItem from="1789417834255" duration="2434000" />
+      <workItem from="1789421940658" duration="501000" />
+      <workItem from="1789475199380" duration="483000" />
+      <workItem from="1789561457648" duration="7173000" />
+      <workItem from="1789573689305" duration="1726000" />
+      <workItem from="1789575448670" duration="7260000" />
+      <workItem from="1789592695154" duration="2860000" />
+      <workItem from="1789595603649" duration="172000" />
+      <workItem from="1789653032007" duration="13000000" />
+      <workItem from="1789681774366" duration="4060000" />
+      <workItem from="1789736443261" duration="1661000" />
+      <workItem from="1789739495568" duration="1555000" />
+      <workItem from="1789741092014" duration="3168000" />
+      <workItem from="1789744684543" duration="456000" />
+      <workItem from="1789745160851" duration="706000" />
+      <workItem from="1789748237953" duration="2597000" />
+      <workItem from="1789754094882" duration="894000" />
+      <workItem from="1789762250297" duration="1361000" />
     </task>
     <servers />
   </component>

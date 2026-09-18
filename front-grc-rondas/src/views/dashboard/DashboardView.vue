@@ -195,7 +195,15 @@ const handleActividadSizeChange = (limit) => {
   fetchDashboard()
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // Wait for permissions to be loaded before fetching dashboard
+  if (!authStore.permissionsLoaded) {
+    const maxWait = 5000 // máximo 5 segundos
+    const startTime = Date.now()
+    while (!authStore.permissionsLoaded && Date.now() - startTime < maxWait) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+  }
   fetchDashboard()
 })
 </script>

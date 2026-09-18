@@ -14,6 +14,17 @@ class InfoUserAuthenticatedResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // Obtener los permisos de manera eficiente desde los roles
+        $permissions = [];
+        foreach ($this->roles as $role) {
+            // Acceder a los permisos que ya vienen cargados en el rol
+            if ($role->relationLoaded('permissions')) {
+                foreach ($role->permissions as $permission) {
+                    $permissions[$permission['name']] = true;
+                }
+            }
+        }
+        
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -27,12 +38,7 @@ class InfoUserAuthenticatedResource extends JsonResource
                 },
                 $this->roles->toArray()
             ),
-            'permissions' => array_map(
-                function ($permission) {
-                    return $permission['name'];
-                },
-                $this->getAllPermissions()->toArray()
-            )
+            'permissions' => array_keys($permissions)
         ];
     }
 }

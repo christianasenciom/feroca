@@ -65,8 +65,9 @@ class WebAuthController extends Controller
 
     public function UserInfo(UserInfoRequest $request)
     {
-        Log::alert(auth()->user());
-        return new InfoUserAuthenticatedResource(auth()->user());
+        $user = auth()->user()->load(['persona', 'roles.permissions']);
+        Log::alert($user);
+        return new InfoUserAuthenticatedResource($user);
     }
 
     public function SingOutCurrentSession(Request $request)
